@@ -10,21 +10,31 @@ from odoo.http import request
 from odoo.exceptions import UserError
 from odoo.addons.auth_signup.models.res_users import SignupError
 from odoo.addons.graphql_vuestorefront.schemas.objects import User
+from odoo.addons.website_mass_mailing.controllers.main import MassMailController
 
 
 class Login(graphene.Mutation):
     class Arguments:
         email = graphene.String(required=True)
         password = graphene.String(required=True)
+        subscribe_newsletter = graphene.Boolean(default_value=False)
 
     Output = User
 
     @staticmethod
-    def mutate(self, info, email, password):
+    def mutate(self, info, email, password, subscribe_newsletter):
         env = info.context['env']
+        website = env['website'].get_current_website()
+        request.website = website
+
+        # Set email in lowercase
+        email = email.lower()
 
         try:
             uid = request.session.authenticate(request.session.db, email, password)
+            # Subscribe Newsletter
+            if website and website.vsf_mailing_list_id and subscribe_newsletter:
+                MassMailController().subscribe(website.vsf_mailing_list_id.id, email)
             return env['res.users'].sudo().browse(uid)
         except odoo.exceptions.AccessDenied as e:
             if e.args == odoo.exceptions.AccessDenied().args:
@@ -47,12 +57,18 @@ class Register(graphene.Mutation):
         name = graphene.String(required=True)
         email = graphene.String(required=True)
         password = graphene.String(required=True)
+        subscribe_newsletter = graphene.Boolean(default_value=False)
 
     Output = User
 
     @staticmethod
-    def mutate(self, info, name, email, password):
+    def mutate(self, info, name, email, password, subscribe_newsletter):
         env = info.context['env']
+        website = env['website'].get_current_website()
+        request.website = website
+
+        # Set email in lowercase
+        email = email.lower()
 
         data = {
             'name': name,
@@ -64,6 +80,10 @@ class Register(graphene.Mutation):
             raise GraphQLError(_('Another user is already registered using this email address.'))
 
         env['res.users'].sudo().signup(data)
+
+        # Subscribe Newsletter
+        if website and website.vsf_mailing_list_id and subscribe_newsletter:
+            MassMailController().subscribe(website.vsf_mailing_list_id.id, email)
 
         return env['res.users'].sudo().search([('login', '=', data['login'])], limit=1)
 
@@ -79,6 +99,10 @@ class ResetPassword(graphene.Mutation):
         env = info.context['env']
         ResUsers = env['res.users'].sudo()
         create_user = info.context.get('create_user', False)
+
+        # Set email in lowercase
+        email = email.lower()
+
         user = ResUsers.search([('login', '=', email)])
         if not user:
             user = ResUsers.search([('email', '=', email)])
@@ -134,8 +158,16 @@ class UpdatePassword(graphene.Mutation):
     @staticmethod
     def mutate(self, info, current_password, new_password):
         env = info.context['env']
+        website = env['website'].get_current_website()
+        request.website = website
+        website_user = website.user_id
         if env.uid:
-            user = env['res.users'].search([('id', '=', env.uid)])
+            user = env['res.users'].sudo().search([('id', '=', env.uid), ('active', 'in', [True, False])], limit=1)
+
+            # Prevent "Public User" to be Updated
+            if user and user.id and user.id == website_user.id:
+                raise GraphQLError(_('Partner cannot be updated.'))
+
             try:
                 user._check_credentials(current_password, env)
                 user.change_password(current_password, new_password)
