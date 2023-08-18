@@ -110,20 +110,22 @@ def get_product_list(env, current_page, page_size, search, sort, **kwargs):
     order = get_search_order(sort)
     products = Product.search(domain, order=order)
 
-    # If attribute values are selected, we need to get the full list of attribute values and prices
-    if domain == partial_domain:
-        attribute_values = products.mapped('variant_attribute_value_ids')
-        prices = products.mapped('list_price')
-    else:
-        without_attributes_products = Product.search(partial_domain)
-        attribute_values = without_attributes_products.mapped('variant_attribute_value_ids')
-        prices = without_attributes_products.mapped('list_price')
-
+    # TODO: Should be re-evaluated and reworked for larger amount of products
+    # Commented since it slows down the query for getting the products,
+    # Leaving the code just for reference for later refactoring of the module
+#    # If attribute values are selected, we need to get the full list of attribute values and prices
+#     if domain == partial_domain:
+#         attribute_values = products.mapped('variant_attribute_value_ids')
+#         prices = products.mapped('list_price')
+#     else:
+#         without_attributes_products = Product.search(partial_domain)
+#         attribute_values = without_attributes_products.mapped('variant_attribute_value_ids')
+#         prices = without_attributes_products.mapped('list_price')
     total_count = len(products)
     products = products[offset:offset + page_size]
-    if prices:
-        return products, total_count, attribute_values, min(prices), max(prices)
-    return products, total_count, attribute_values, 0.0, 0.0
+#     if prices:
+#         return products, total_count, attribute_values, min(prices), max(prices)
+    return products, total_count, [], 0.0, 0.0
 
 
 class Products(graphene.Interface):

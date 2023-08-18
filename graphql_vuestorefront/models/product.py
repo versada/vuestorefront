@@ -7,10 +7,22 @@ import requests
 from odoo import models, fields, api, tools, _
 from odoo.addons.http_routing.models.ir_http import slug, slugify
 from odoo.exceptions import ValidationError
+from odoo.tools.sql import column_exists, create_column
 
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
+
+    def _auto_init(self):
+        """Skip computation of the field on module installation
+        because it will fail as a result of large amount of products"""
+        if not column_exists(
+            self.env.cr, "product_template", "website_slug"
+        ):
+            create_column(
+                self.env.cr, "product_template", "website_slug", "varchar"
+            )
+        return super()._auto_init()
 
     def _get_public_categ_slug(self, category_ids, category):
         category_ids.append(category.id)
@@ -44,18 +56,21 @@ class ProductTemplate(models.Model):
 
     @api.depends('name')
     def _compute_website_slug(self):
-        langs = self.env['res.lang'].search([])
-
+        """
+            Simplifying the method and removing lang from it.
+        """
+        products_data = self.read(["name"])
+        products_dict = {}
+        for prod_d in products_data:
+            products_dict.setdefault(prod_d["id"], prod_d)
         for product in self:
-            for lang in langs:
-                product = product.with_context(lang=lang.code)
-
-                if not product.id:
-                    product.website_slug = None
-                else:
-                    prefix = '/product'
-                    slug_name = slugify(product.name or '').strip().strip('-')
-                    product.website_slug = '{}/{}-{}'.format(prefix, slug_name, product.id)
+            product_data = products_dict.get(product.id)
+            if not product_data:
+                product.website_slug = None
+            else:
+                prefix = '/product'
+                slug_name = slugify(product_data["name"] or '').strip().strip('-')
+                product.website_slug = '{}/{}-{}'.format(prefix, slug_name, product_data["id"])
 
     @api.depends('product_variant_ids')
     def _compute_variant_attribute_value_ids(self):
@@ -73,16 +88,20 @@ class ProductTemplate(models.Model):
                 mapped('product_attribute_value_id')
             product.variant_attribute_value_ids = [(6, 0, attribute_values.ids)]
 
+    # Recomputation of m2m fields can be quite slow so making it for now not stored
+    # TODO: Re-evaluate and removed if not needed
     variant_attribute_value_ids = fields.Many2many('product.attribute.value',
                                                    'product_template_variant_product_attribute_value_rel',
                                                    compute='_compute_variant_attribute_value_ids',
-                                                   store=True, readonly=True)
+                                                   store=False, readonly=True)
+    # No need of translated slugs
     website_slug = fields.Char('Website Slug', compute='_compute_website_slug', store=True, readonly=True,
-                               translate=True)
+                               translate=False)
+    # TODO: Re-evaluate and remove the code related to this field if not needed
     public_categ_slug_ids = fields.Many2many('product.public.category',
                                              'product_template_product_public_category_slug_rel',
                                              compute='_compute_public_categ_slug_ids',
-                                             store=True, readonly=True)
+                                             store=False, readonly=True)
     json_ld = fields.Char('JSON-LD')
 
     def write(self, vals):
@@ -217,8 +236,18 @@ class ProductPublicCategory(models.Model):
             if self.search([('website_slug', '=', category.website_slug), ('id', '!=', category.id)], limit=1):
                 raise ValidationError(_('Slug is already in use: {}'.format(category.website_slug)))
 
-    website_slug = fields.Char('Website Slug', translate=True, copy=False)
+    website_slug = fields.Char('Website Slug', copy=False,
+                               compute='_compute_website_slug', store=True)
     json_ld = fields.Char('JSON-LD')
+
+    # TODO: Temporary solution to use existing website_slug because of the logic related to it
+    @api.depends("slug")
+    def _compute_website_slug(self):
+        for categ in self:
+            if categ.slug:
+                categ.website_slug = f"/{categ.slug}"
+            else:
+                categ.website_slug = False
 
     @api.model
     def create(self, vals):
