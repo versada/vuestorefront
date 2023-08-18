@@ -224,6 +224,7 @@ class Category(OdooObjectType):
     slug = graphene.String()
     products = graphene.List(graphene.NonNull(lambda: Product))
     json_ld = generic.GenericScalar()
+    menu_column = graphene.Int()
 
     def resolve_parent(self, info):
         return self.parent_id or None
