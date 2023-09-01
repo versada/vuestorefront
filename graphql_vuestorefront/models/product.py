@@ -239,6 +239,8 @@ class ProductPublicCategory(models.Model):
     website_slug = fields.Char('Website Slug', copy=False,
                                compute='_compute_website_slug', store=True)
     json_ld = fields.Char('JSON-LD')
+    # TODO: Temporary added as dependency requirement.
+    slug = fields.Char()
 
     # TODO: Temporary solution to use existing website_slug because of the logic related to it
     @api.depends("slug")
