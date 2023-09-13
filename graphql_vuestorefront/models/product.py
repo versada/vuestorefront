@@ -59,7 +59,12 @@ class ProductTemplate(models.Model):
         """
             Simplifying the method and removing lang from it.
         """
-        products_data = self.read(["name"])
+        products_data = {}
+        # On creation of a new product "read" is not possible
+        # while the product is not created
+        # Instead misleading Access Error is raised
+        if self.ids:
+            products_data = self.read(["name"])
         products_dict = {}
         for prod_d in products_data:
             products_dict.setdefault(prod_d["id"], prod_d)
