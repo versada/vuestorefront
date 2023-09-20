@@ -1,6 +1,18 @@
-======================
-Graphql Vue Storefront
-======================
+==============
+Vue Storefront
+==============
+
+This is a forked module previously called ``graphql_vuestorefront``. It
+is backwards incompatible module, so it should not be installed
+alongside ``graphql_vuestorefront``. Custom changes different than in
+forked module:
+
+* ``get_product_list`` in ``schemas.product`` now uses offset/limit in standard
+  search instead of searching for all possible products and then slicing (
+  which has terrible performance).
+* ``variant_attribute_value_ids`` field on ``product.template`` removed, as it
+  was not performant and not really used.
+
 
 Login
 =====
