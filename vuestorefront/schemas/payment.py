@@ -14,8 +14,8 @@ from odoo.http import request
 from odoo.osv import expression
 from odoo.addons.payment_vsf import utils as payment_utils
 from odoo.addons.payment_vsf_adyen.const import CURRENCY_DECIMALS
-from odoo.addons.graphql_vuestorefront.schemas.objects import PaymentAcquirer, PaymentTransaction
-from odoo.addons.graphql_vuestorefront.schemas.shop import Cart, CartData
+from odoo.addons.vuestorefront.schemas.objects import PaymentAcquirer, PaymentTransaction
+from odoo.addons.vuestorefront.schemas.shop import Cart, CartData
 from odoo.addons.website_sale.controllers.main import WebsiteSale
 from odoo.addons.payment_vsf_adyen.controllers.main import AdyenDirectController
 

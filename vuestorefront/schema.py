@@ -5,7 +5,7 @@
 import graphene
 
 from odoo.addons.graphql_base import OdooObjectType
-from odoo.addons.graphql_vuestorefront.schemas import (
+from odoo.addons.vuestorefront.schemas import (
     country, category, product, order, invoice,
     contact_us, user_profile, sign, address,
     wishlist, shop, payment, mailing_list

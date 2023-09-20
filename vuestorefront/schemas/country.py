@@ -4,7 +4,7 @@
 
 import graphene
 
-from odoo.addons.graphql_vuestorefront.schemas.objects import (
+from odoo.addons.vuestorefront.schemas.objects import (
     SortEnum, Country
 )
 

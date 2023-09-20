@@ -4,7 +4,7 @@
 
 import graphene
 
-from odoo.addons.graphql_vuestorefront.schemas.objects import Lead
+from odoo.addons.vuestorefront.schemas.objects import Lead
 
 
 class ContactUsParams(graphene.InputObjectType):
