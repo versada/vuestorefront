@@ -44,10 +44,6 @@ def get_search_domain(env, search, **kwargs):
     if kwargs.get('category_id', False):
         domains.append([('public_categ_ids', 'child_of', kwargs['category_id'])])
 
-    # Filter with Category Slug
-    if kwargs.get('category_slug', False):
-        domains.append([('public_categ_slug_ids.website_slug', '=', kwargs['category_slug'])])
-
     # Filter With Barcode
     if kwargs.get('barcode', False):
         domains.append([('barcode', 'ilike', kwargs['barcode'])])
@@ -100,7 +96,7 @@ def get_search_domain(env, search, **kwargs):
 
 def get_product_list(env, current_page, page_size, search, sort, **kwargs):
     Product = env['product.template'].sudo()
-    domain, partial_domain = get_search_domain(env, search, **kwargs)
+    domain = get_search_domain(env, search, **kwargs)[0]
 
     # First offset is 0 but first page is 1
     if current_page > 1:
@@ -109,14 +105,12 @@ def get_product_list(env, current_page, page_size, search, sort, **kwargs):
         offset = 0
     order = get_search_order(sort)
     products = Product.search(domain, order=order, offset=offset, limit=page_size)
-    prices = products.mapped('list_price')
     total_count = len(products)
     ProductAttributeValue = env['product.attribute.value']
     # TODO: either return standard attribute value from products or
     # redesign to not return anything instead of empty recordset (
     # ProductAttributeValue).
-    if prices:
-        return products, total_count, ProductAttributeValue, min(prices), max(prices)
+    # TODO: return some product prices instead of `0.0`.
     return products, total_count, ProductAttributeValue, 0.0, 0.0
 
 

@@ -44,8 +44,10 @@ class GraphQLController(http.Controller, GraphQLControllerMixin):
                 _logger.info('\n%s', request.args.get('variables', None))
                 _logger.info('')
                 _logger.info('# ------------------------------------------------------------------------------------ #')
-            except:
-                pass
+            except Exception as e:
+                _logger.error(
+                    "Something went wrong processing request: %s", e, exc_info=True
+                )
         return super(GraphQLController, self)._process_request(schema, data)
 
     def _set_website_context(self):
@@ -67,8 +69,10 @@ class GraphQLController(http.Controller, GraphQLControllerMixin):
                 if request_uid != website_uid \
                         and request.env['res.users'].sudo().browse(request_uid).has_group('base.group_public'):
                     request.uid = website_uid
-        except:
-            pass
+        except Exception as e:
+            _logger.error(
+                "Something went wrong setting website context: %s", e, exc_info=True
+            )
 
     # The GraphiQL route, providing an IDE for developers
     @http.route("/graphiql/vsf", auth="user")

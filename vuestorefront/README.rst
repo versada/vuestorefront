@@ -12,7 +12,13 @@ forked module:
   which has terrible performance).
 * ``variant_attribute_value_ids`` field on ``product.template`` removed, as it
   was not performant and not really used.
-
+* ``website_slug``: got rid of translate awareness (to simplify it), and not adding
+  slashes in slug, because slug is not supposed to have that. (on category, removed
+  validation as it was forcing to use slash. Added unique constraint, because
+  category slug can be entered manually).
+* Split odoo model files into more appropriate, to make it more readable and maintainable.
+* Removed ``public_categ_slug_ids`` field as it was confusing and redundant
+  field that was very slow to compute for large amount of products.
 
 Login
 =====
