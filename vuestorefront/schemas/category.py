@@ -23,7 +23,7 @@ def get_search_order(sort):
 
 
 class CategoryFilterInput(graphene.InputObjectType):
-    id = graphene.List(graphene.Int)
+    ids = graphene.List(graphene.Int)
     parent = graphene.Boolean()
 
 
@@ -84,8 +84,8 @@ class CategoryQuery(graphene.ObjectType):
             for srch in search.split(" "):
                 domain += [('name', 'ilike', srch)]
 
-        if filter.get('id'):
-            domain += [('id', 'in', filter['id'])]
+        if filter.get('ids'):
+            domain += [('id', 'in', filter['ids'])]
 
         # Parent if is a Top Category
         if filter.get('parent'):
