@@ -32,6 +32,17 @@ def get_search_order(sort):
     return sorting
 
 
+def _get_category_slug_leaf(env, category_slug):
+    # We need to search for category, because we want to include child
+    # categories.
+    categ = env['product.public.category'].search(
+        [('website_slug', '=', category_slug)]
+    )
+    if categ:
+        return ('public_categ_ids', 'child_of', categ.id)
+    return None
+
+
 def get_search_domain(env, search, **kwargs):
     # Only get published products
     domains = [env['website'].get_current_website().sale_product_domain()]
@@ -43,6 +54,10 @@ def get_search_domain(env, search, **kwargs):
     # Filter with Category ID
     if kwargs.get('category_id', False):
         domains.append([('public_categ_ids', 'child_of', kwargs['category_id'])])
+    if kwargs.get('category_slug'):
+        category_slug_leaf = _get_category_slug_leaf(env, kwargs['category_slug'])
+        if category_slug_leaf is not None:
+            domains.append([category_slug_leaf])
 
     # Filter With Barcode
     if kwargs.get('barcode', False):

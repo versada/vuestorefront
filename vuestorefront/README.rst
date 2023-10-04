@@ -19,6 +19,7 @@ forked module:
 * Split odoo model files into more appropriate, to make it more readable and maintainable.
 * Removed ``public_categ_slug_ids`` field as it was confusing and redundant
   field that was very slow to compute for large amount of products.
+* implemented ``products`` ``category_slug`` filter.
 
 Login
 =====
