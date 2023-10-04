@@ -4,11 +4,6 @@ from ..schemas.product import get_product_list
 
 
 class TestProduct(common.TestVuestorefrontCommon):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.product_tmpl_bin = cls.env.ref('product.product_product_9_product_template')
-
     def test_01_get_product_list_by_name(self):
         res = get_product_list(
             self.env, 1, 100, "", {}, name=self.product_tmpl_bin.name

@@ -10,6 +10,13 @@ class TestVuestorefrontCommon(SavepointCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.graphene_client = Client(schema)
+        cls.InvalidateCache = cls.env['invalidate.cache']
+        cls.public_category_desks = cls.env.ref('website_sale.public_category_desks')
+        cls.public_category_components = cls.env.ref(
+            'website_sale.public_category_desks_components'
+        )
+        cls.public_category_bins = cls.env.ref('website_sale.public_category_bins')
+        cls.product_tmpl_bin = cls.env.ref('product.product_product_9_product_template')
 
     def execute(self, query, **kw):
         res = self.graphene_client.execute(query, context={"env": self.env}, **kw)
