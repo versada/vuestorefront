@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 
 
 class ProductPublicCategory(models.Model):
@@ -49,3 +49,14 @@ class ProductPublicCategory(models.Model):
             while parent:
                 yield parent
                 parent = parent.parent_id
+
+    @api.model
+    def _get_category_slug_leaf(self, category_slug):
+        # We need to search for category, because we want to include child
+        # categories.
+        categ = self.env['product.public.category'].search(
+            [('website_slug', '=', category_slug)]
+        )
+        if categ:
+            return ('public_categ_ids', 'child_of', categ.id)
+        return None

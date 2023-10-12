@@ -4,6 +4,7 @@
 
 from odoo import models, fields, api
 from odoo.tools.sql import column_exists, create_column
+from odoo.osv import expression
 
 from odoo.addons.http_routing.models.ir_http import slug, slugify
 
@@ -131,3 +132,78 @@ class ProductTemplate(models.Model):
             json_ld.update({"sku": self.default_code})
 
         return json_ld
+
+    @api.model
+    def prepare_vsf_domain(self, search, **kwargs):
+        # Only get published products
+        domains = [self.env['website'].get_current_website().sale_product_domain()]
+
+        # Filter with ids
+        if kwargs.get('ids', False):
+            domains.append([('id', 'in', kwargs['ids'])])
+
+        # Filter with Category ID
+        if kwargs.get('category_id', False):
+            domains.append(('public_categ_ids', 'child_of', kwargs['category_id']))
+        if kwargs.get('category_slug'):
+            category_slug_leaf = self.env[
+                'product.public.category'
+            ]._get_category_slug_leaf(kwargs['category_slug'])
+            if category_slug_leaf is not None:
+                domains.append([category_slug_leaf])
+
+        # Filter With Barcode
+        if kwargs.get('barcode', False):
+            domains.append([('barcode', 'ilike', kwargs['barcode'])])
+
+        # Filter With Name
+        if kwargs.get('name', False):
+            name = kwargs['name']
+            for n in name.split(" "):
+                domains.append([('name', 'ilike', n)])
+        if search:
+            for srch in search.split(" "):
+                domains.append(
+                    [
+                        '|',
+                        '|',
+                        '|',
+                        ('name', 'ilike', srch),
+                        ('description_sale', 'like', srch),
+                        ('default_code', 'like', srch),
+                        ('barcode', 'ilike', srch)
+                    ]
+                )
+
+        # Product Price Filter
+        if kwargs.get('min_price', False):
+            domains.append([('list_price', '>=', float(kwargs['min_price']))])
+        if kwargs.get('max_price', False):
+            domains.append([('list_price', '<=', float(kwargs['max_price']))])
+
+        # Deprecated: filter with Attribute Value
+        if kwargs.get('attribute_value_id', False):
+            domains.append(
+                [('attribute_line_ids.value_ids', 'in', kwargs['attribute_value_id'])]
+            )
+
+        # Filter with Attribute Value
+        if kwargs.get('attrib_values', False):
+            ids = []
+
+            for value in kwargs['attrib_values']:
+                try:
+                    value = value.split('-')
+                    if len(value) != 2:
+                        continue
+
+                    attribute_value_id = int(value[1])
+                except ValueError:
+                    continue
+
+                ids.append(attribute_value_id)
+
+            if ids:
+                domains.append([('attribute_line_ids.value_ids', 'in', ids)])
+
+        return expression.AND(domains)
