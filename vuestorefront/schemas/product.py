@@ -6,7 +6,6 @@ import graphene
 from graphql import GraphQLError
 from odoo.http import request
 from odoo import _
-from odoo.osv import expression
 
 from odoo.addons.vuestorefront.schemas.objects import (
     SortEnum, Product, Attribute, AttributeValue
@@ -32,86 +31,9 @@ def get_search_order(sort):
     return sorting
 
 
-def _get_category_slug_leaf(env, category_slug):
-    # We need to search for category, because we want to include child
-    # categories.
-    categ = env['product.public.category'].search(
-        [('website_slug', '=', category_slug)]
-    )
-    if categ:
-        return ('public_categ_ids', 'child_of', categ.id)
-    return None
-
-
-def get_search_domain(env, search, **kwargs):
-    # Only get published products
-    domains = [env['website'].get_current_website().sale_product_domain()]
-
-    # Filter with ids
-    if kwargs.get('ids', False):
-        domains.append([('id', 'in', kwargs['ids'])])
-
-    # Filter with Category ID
-    if kwargs.get('category_id', False):
-        domains.append([('public_categ_ids', 'child_of', kwargs['category_id'])])
-    if kwargs.get('category_slug'):
-        category_slug_leaf = _get_category_slug_leaf(env, kwargs['category_slug'])
-        if category_slug_leaf is not None:
-            domains.append([category_slug_leaf])
-
-    # Filter With Barcode
-    if kwargs.get('barcode', False):
-        domains.append([('barcode', 'ilike', kwargs['barcode'])])
-
-    # Filter With Name
-    if kwargs.get('name', False):
-        name = kwargs['name']
-        for n in name.split(" "):
-            domains.append([('name', 'ilike', n)])
-
-    if search:
-        for srch in search.split(" "):
-            domains.append([
-                '|', '|', '|', ('name', 'ilike', srch), ('description_sale', 'like', srch),
-                ('default_code', 'like', srch), ('barcode', 'ilike', srch)])
-
-    partial_domain = domains.copy()
-
-    # Product Price Filter
-    if kwargs.get('min_price', False):
-        domains.append([('list_price', '>=', float(kwargs['min_price']))])
-    if kwargs.get('max_price', False):
-        domains.append([('list_price', '<=', float(kwargs['max_price']))])
-
-    # Deprecated: filter with Attribute Value
-    if kwargs.get('attribute_value_id', False):
-        domains.append([('attribute_line_ids.value_ids', 'in', kwargs['attribute_value_id'])])
-
-    # Filter with Attribute Value
-    if kwargs.get('attrib_values', False):
-        ids = []
-
-        for value in kwargs['attrib_values']:
-            try:
-                value = value.split('-')
-                if len(value) != 2:
-                    continue
-
-                attribute_value_id = int(value[1])
-            except ValueError:
-                continue
-
-            ids.append(attribute_value_id)
-
-        if ids:
-            domains.append([('attribute_line_ids.value_ids', 'in', ids)])
-
-    return expression.AND(domains), expression.AND(partial_domain)
-
-
 def get_product_list(env, current_page, page_size, search, sort, **kwargs):
     Product = env['product.template'].sudo()
-    domain = get_search_domain(env, search, **kwargs)[0]
+    domain = Product.prepare_vsf_domain(search, **kwargs)
 
     # First offset is 0 but first page is 1
     if current_page > 1:

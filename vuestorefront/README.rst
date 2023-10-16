@@ -20,6 +20,7 @@ forked module:
 * Removed ``public_categ_slug_ids`` field as it was confusing and redundant
   field that was very slow to compute for large amount of products.
 * implemented ``products`` ``category_slug`` filter.
+* moved Product schema domain method to ``product.template`` to be extendable.
 
 Login
 =====
