@@ -42,7 +42,8 @@ def get_product_list(env, current_page, page_size, search, sort, **kwargs):
         offset = 0
     order = get_search_order(sort)
     products = Product.search(domain, order=order, offset=offset, limit=page_size)
-    total_count = len(products)
+    # Total count from the whole query is needed for creating proper pagination for it
+    total_count = Product.search_count(domain)
     ProductAttributeValue = env['product.attribute.value']
     # TODO: either return standard attribute value from products or
     # redesign to not return anything instead of empty recordset (
