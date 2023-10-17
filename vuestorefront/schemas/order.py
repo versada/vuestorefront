@@ -42,6 +42,10 @@ class OrderSortInput(graphene.InputObjectType):
     state = SortEnum()
 
 
+class UpdateOrderInput(graphene.InputObjectType):
+    client_order_ref = graphene.String()
+
+
 class Orders(graphene.Interface):
     orders = graphene.List(Order)
     total_count = graphene.Int(required=True)
@@ -131,6 +135,24 @@ class OrderQuery(graphene.ObjectType):
         return order._get_delivery_methods()
 
 
+class UpdateOrder(graphene.Mutation):
+    class Arguments:
+        data = UpdateOrderInput(required=True)
+
+    Output = Order
+
+    @staticmethod
+    def mutate(self, info, data):
+        env = info.context["env"]
+        website = env['website'].get_current_website()
+        request.website = website
+        order = website.sale_get_order(force_create=True)
+        vals = order.prepare_vsf_vals(data)
+        if vals:
+            order.write(vals)
+        return order
+
+
 class ApplyCoupon(graphene.Mutation):
     class Arguments:
         promo = graphene.String()
@@ -150,4 +172,5 @@ class ApplyCoupon(graphene.Mutation):
 
 
 class OrderMutation(graphene.ObjectType):
-    apply_coupon = ApplyCoupon.Field(description='Apply Coupon')
+    update_order = UpdateOrder.Field(description="Update Order")
+    apply_coupon = ApplyCoupon.Field(description="Apply Coupon")

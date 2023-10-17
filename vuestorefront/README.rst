@@ -22,6 +22,24 @@ forked module:
 * implemented ``products`` ``category_slug`` filter.
 * moved Product schema domain method to ``product.template`` to be extendable.
 
+Addresses
+---------
+
+* Moved address domain methods on ``res.partner`` to be extendable.
+* Moved preparation of partner (address) creation/update on ``res.partner to
+  be extendable.
+
+Sale Order
+----------
+
+* Added UpdateOrder mutation to be able to update some data on sale order.
+
+Payments
+--------
+
+* Added MakePayment mutation to be handler for all payments. Currently transfer
+  payment is supported.
+
 Login
 =====
 
