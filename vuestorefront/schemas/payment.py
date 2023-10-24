@@ -385,7 +385,55 @@ class AdyenPaymentDetails(graphene.Mutation):
         return AdyenPaymentDetailsResult(adyen_payment_details=adyen_payment_details)
 
 
+class MakePayment(graphene.Mutation):
+    class Arguments:
+        acquirer_id = graphene.Int(required=True)
+
+    Output = PaymentTransaction
+
+    @staticmethod
+    def mutate(self, info, acquirer_id):
+        env = info.context['env']
+        PaymentAcquirer = env['payment.acquirer'].sudo()
+        payment_acquirer = PaymentAcquirer.browse(acquirer_id)
+        if (
+            not payment_acquirer.exists()
+            or payment_acquirer.state not in ('enabled', 'test')
+        ):
+            raise GraphQLError(
+                "Provided Payment Acquirer does not exist or can't be used."
+            )
+        website = env['website'].get_current_website()
+        request.website = website
+        order = website.sale_get_order()
+        transaction = order._create_payment_transaction({'acquirer_id': acquirer_id})
+        if payment_acquirer.provider == 'transfer':
+            # This is needed to fully handle payment like it is done via odoo
+            # shop (e.g. make sale order change state to sent)
+            MakePayment._handle_transfer_feedback(env, transaction)
+        else:
+            raise GraphQLError(
+                f"Payment Acquirer {payment_acquirer.provider} is currently "
+                + "not supported"
+            )
+        return transaction
+
+    # TODO: better move this to odoo model.
+    @staticmethod
+    def _handle_transfer_feedback(env, transaction):
+        # Strange that there is no feedback method on transaction record
+        # directly..
+        data = {
+            'return_url': transaction.return_url,
+            'reference': transaction.reference,
+            'amount': transaction.amount,
+            'currency': transaction.currency_id.name,
+        }
+        env['payment.transaction'].sudo().form_feedback(data, 'transfer')
+
+
 class PaymentMutation(graphene.ObjectType):
+    make_payment = MakePayment.Field(description='Make a payment using acquirer')
     adyen_acquirer_info = AdyenAcquirerInfo.Field(description='Get Adyen Acquirer Info.')
     adyen_payment_methods = AdyenPaymentMethods.Field(description='Get Adyen Payment Methods.')
     adyen_transaction = AdyenTransaction.Field(description='Create Adyen Transaction')

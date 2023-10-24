@@ -67,17 +67,11 @@ class AddressQuery(graphene.ObjectType):
         website = env['website'].get_current_website()
         request.website = website
         order = website.sale_get_order()
-
         partner_id = get_partner_id(env, order, website)
-
+        partner = env["res.partner"].browse(partner_id)
         # Get all addresses of a specific addressType - delivery or/and shipping
         if filter.get('address_type'):
-            types = [address_type.value for address_type in filter.get('address_type', [])]
-
-            domain = [
-                ("id", "child_of", partner_id),
-                ("type", "in", types),
-            ]
+            domain = partner._prepare_vsf_address_domain(filter["address_type"])
         # Get all addresses with addressType delivery and invoice
         else:
             domain = [
@@ -143,30 +137,14 @@ class AddAddress(graphene.Mutation):
             raise GraphQLError(_('Shopping cart not found.'))
         else:
             partner_id = env.user.partner_id.id
-
-        values = {
-            'name': address.get('name'),
-            'street': address.get('street'),
-            'street2': address.get('street2'),
-            'phone': address.get('phone'),
-            'zip': address.get('zip'),
-            'city': address.get('city'),
-            'state_id': address.get('state_id', False),
-            'country_id': address.get('country_id', False),
-            'email': address.get('email', False),
-        }
-
+        values = ResPartner.prepare_vsf_address_vals(address)
         # Check public user
         if partner_id == website.user_id.sudo().partner_id.id:
             # Create main contact
-            values['type'] = 'contact'
-            partner_id = ResPartner.create(values).id
+            partner_id = ResPartner.create(dict(values, type='contact')).id
             order.partner_id = partner_id
             order.with_context(not_self_saleperson=True).onchange_partner_id()
-
-        values['type'] = type.value
-        values['parent_id'] = partner_id
-
+        values.update({'type': type.value, 'parent_id': partner_id})
         # Create the new shipping or invoice address
         partner = ResPartner.create(values)
 
@@ -178,11 +156,10 @@ class AddAddress(graphene.Mutation):
                     order.partner_shipping_id = partner.id
             elif values['type'] == 'delivery':
                 order.partner_shipping_id = partner.id
-
-            # Trigger the change of fiscal position when the shipping address is modified
-            order.onchange_partner_shipping_id()
-            order._compute_tax_id()
-
+                # Trigger the change of fiscal position when the shipping
+                # address is modified.
+                order.onchange_partner_shipping_id()
+                order._compute_tax_id()
         return partner
 
 
@@ -198,38 +175,15 @@ class UpdateAddress(graphene.Mutation):
         website = env['website'].get_current_website()
         request.website = website
         order = website.sale_get_order()
-
         partner = get_partner(env, address['id'], order, website)
-
-        values = {}
-        if address.get('name'):
-            values.update({'name': address['name']})
-        if address.get('street'):
-            values.update({'street': address['street']})
-        if address.get('street2'):
-            values.update({'street2': address['street2']})
-        if address.get('phone'):
-            values.update({'phone': address['phone']})
-        if address.get('zip'):
-            values.update({'zip': address['zip']})
-        if address.get('city'):
-            values.update({'city': address['city']})
-        if address.get('state_id'):
-            values.update({'state_id': address['state_id']})
-        if address.get('country_id'):
-            values.update({'country_id': address['country_id']})
-
+        values = env['res.partner'].prepare_vsf_address_vals(address)
         if order:
-            # Trigger the change of fiscal position when the shipping address is modified
+            # Trigger the change of fiscal position when the shipping address
+            # is modified
             order.onchange_partner_shipping_id()
             order._compute_tax_id()
-
-        if address.get('email'):
-            values.update({'email': address['email']})
-
         if values:
             partner.write(values)
-
         return partner
 
 
@@ -257,10 +211,10 @@ class DeleteAddress(graphene.Mutation):
 
             if order.partner_shipping_id.id == partner.id:
                 order.partner_shipping_id = partner.parent_id.id
-
-            # Trigger the change of fiscal position when the shipping address is modified
-            order.onchange_partner_shipping_id()
-            order._compute_tax_id()
+                # Trigger the change of fiscal position when the shipping
+                # address is modified
+                order.onchange_partner_shipping_id()
+                order._compute_tax_id()
 
         # Archive address, safer than delete since this address could be in use by other object
         partner.active = False
@@ -294,11 +248,10 @@ class SelectAddress(graphene.Mutation):
                 order.partner_shipping_id = partner.id
         elif type.value == 'delivery':
             order.partner_shipping_id = partner.id
-
-        # Trigger the change of fiscal position when the shipping address is modified
-        order.onchange_partner_shipping_id()
-        order._compute_tax_id()
-
+            # Trigger the change of fiscal position when the shipping
+            # address is modified
+            order.onchange_partner_shipping_id()
+            order._compute_tax_id()
         return partner
 
 
