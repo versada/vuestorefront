@@ -28,7 +28,26 @@ class TestQueryProduct(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["products"]["products"], [{"name": "Pedal Bin"}])
 
-    def test_02_query_product_with_category_slug_is_child(self):
+    def test_02_query_product_unpublished_with_category_slug_single(self):
+        # GIVEN
+        self.product_tmpl_bin.is_published = False
+        # WHEN
+        res = self.execute(
+            """
+            query getProductTemplates($ids: [Int], $categorySlug: String) {
+                products(filter: {ids: $ids, categorySlug: $categorySlug}) {
+                    products {
+                        name
+                    }
+                }
+            }
+            """,
+            variables={"ids": self.product_tmpl_bin.ids, "categorySlug": "bins"},
+        )
+        # THEN
+        self.assertEqual(res["products"]["products"], [])
+
+    def test_03_query_product_with_category_slug_is_child(self):
         # GIVEN
         self.product_tmpl_bin.public_categ_ids |= self.public_category_components
         # WHEN
@@ -48,7 +67,7 @@ class TestQueryProduct(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["products"]["products"], [{"name": "Pedal Bin"}])
 
-    def test_03_query_product_with_category_slug_is_parent(self):
+    def test_04_query_product_with_category_slug_is_parent(self):
         # GIVEN
         self.product_tmpl_bin.public_categ_ids |= self.public_category_desks
         # WHEN

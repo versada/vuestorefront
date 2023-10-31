@@ -130,23 +130,22 @@ class ProductQuery(graphene.ObjectType):
     @staticmethod
     def resolve_product(self, info, id=None, slug=None, barcode=None):
         env = info.context["env"]
-        Product = env["product.template"].sudo()
-
+        Product = product = env["product.template"].sudo()
+        domain = None
+        base_domain = [('is_published', '=', True)]
         if id:
-            product = Product.search([('id', '=', id)], limit=1)
+            domain = base_domain + [('id', '=', id)]
         elif slug:
-            product = Product.search([('website_slug', '=', slug)], limit=1)
+            domain = base_domain + [('website_slug', '=', slug)]
         elif barcode:
-            product = Product.search([('barcode', '=', barcode)], limit=1)
-        else:
-            product = Product
-
+            domain = base_domain + [('barcode', '=', barcode)]
+        if domain is not None:
+            product = Product.search(domain, limit=1)
         if product:
             website = env['website'].get_current_website()
             request.website = website
             if not product.can_access_from_current_website():
                 product = Product
-
         return product
 
     @staticmethod

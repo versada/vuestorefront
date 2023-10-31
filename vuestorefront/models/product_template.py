@@ -135,9 +135,10 @@ class ProductTemplate(models.Model):
 
     @api.model
     def prepare_vsf_domain(self, search, **kwargs):
-        # Only get published products
+        # Only get sellable products.
         domains = [self.env['website'].get_current_website().sale_product_domain()]
-
+        if self.is_vsf_published_only(**kwargs):
+            domains.append([('is_published', '=', True)])
         # Filter with ids
         if kwargs.get('ids', False):
             domains.append([('id', 'in', kwargs['ids'])])
@@ -207,3 +208,8 @@ class ProductTemplate(models.Model):
                 domains.append([('attribute_line_ids.value_ids', 'in', ids)])
 
         return expression.AND(domains)
+
+    @api.model
+    def is_vsf_published_only(self, **kwargs):
+        """Check if product search is for published products only."""
+        return True
