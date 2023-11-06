@@ -31,6 +31,7 @@ class TestVuestorefrontCommon(SavepointCase):
         cls.payment_acquirer_transfer = cls.env.ref(
             'payment.payment_acquirer_transfer'
         )
+        cls.product_tmpl_bin.is_published = True
 
     def execute(self, query, **kw):
         res = self.graphene_client.execute(query, context={"env": self.env}, **kw)

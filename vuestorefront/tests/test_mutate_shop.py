@@ -34,3 +34,28 @@ class TestMutateShop(TestVuestorefrontSaleCommon):
         self.assertEqual(len(sale_line_1), 1)
         self.assertEqual(sale_line_1.product_id, self.product_bin)
         self.assertEqual(sale_line_1.product_uom_qty, 10)
+        # GIVEN
+        # Check if we can still query product on cart if it was
+        # unpublished after it was already in a cart.
+        self.product_bin.is_published = False
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getProductFromCart {
+                    cart {
+                        order {
+                            orderLines {
+                                product {
+                                    name
+                                }
+                            }
+                        }
+                    }
+                }
+                """,
+            )
+            self.assertEqual(
+                res["cart"]["order"]["orderLines"],
+                [{"product": {"name": "Pedal Bin"}}]
+            )
