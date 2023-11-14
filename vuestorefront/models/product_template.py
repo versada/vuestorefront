@@ -145,7 +145,7 @@ class ProductTemplate(models.Model):
 
         # Filter with Category ID
         if kwargs.get('category_id', False):
-            domains.append(('public_categ_ids', 'child_of', kwargs['category_id']))
+            domains.append([('public_categ_ids', 'child_of', kwargs['category_id'])])
         if kwargs.get('category_slug'):
             category_slug_leaf = self.env[
                 'product.public.category'

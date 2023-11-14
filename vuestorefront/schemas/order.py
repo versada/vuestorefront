@@ -13,6 +13,8 @@ from odoo.addons.vuestorefront.schemas.objects import (
     get_document_count_with_check_access
 )
 
+from ..utils import get_offset
+
 
 def get_search_order(sort):
     sorting = ''
@@ -113,17 +115,20 @@ class OrderQuery(graphene.ObjectType):
             invoice_status = [invoice_status.value for invoice_status in filter['invoice_status']]
             domain += [('invoice_status', 'in', invoice_status)]
 
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         SaleOrder = env["sale.order"]
-        orders = get_document_with_check_access(SaleOrder, domain, sort_order, page_size, offset,
-                                                error_msg='Sale Order does not exist.')
+        orders = get_document_with_check_access(
+            SaleOrder,
+            domain,
+            sort_order,
+            page_size,
+            offset,
+            error_msg='Sale Order does not exist.'
+        )
         total_count = get_document_count_with_check_access(SaleOrder, domain)
-        return OrderList(orders=orders and orders.sudo() or orders, total_count=total_count)
+        return OrderList(
+            orders=orders and orders.sudo() or orders, total_count=total_count
+        )
 
     @staticmethod
     def resolve_delivery_methods(self, info):

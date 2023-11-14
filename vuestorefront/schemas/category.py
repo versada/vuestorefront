@@ -8,6 +8,8 @@ from odoo.addons.vuestorefront.schemas.objects import (
     SortEnum, Category
 )
 
+from ..utils import get_offset
+
 
 def get_search_order(sort):
     sorting = ''
@@ -90,13 +92,7 @@ class CategoryQuery(graphene.ObjectType):
         # Parent if is a Top Category
         if filter.get('parent'):
             domain += [('parent_id', '=', False)]
-
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         ProductPublicCategory = env["product.public.category"]
         total_count = ProductPublicCategory.search_count(domain)
         categories = ProductPublicCategory.search(

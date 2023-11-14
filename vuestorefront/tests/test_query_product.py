@@ -11,7 +11,24 @@ class TestQueryProduct(common.TestVuestorefrontCommon):
         # Child
         cls.public_category_components.website_slug = "components"
 
-    def test_01_query_product_with_category_slug_single(self):
+    def test_01_query_product_archived(self):
+        # GIVEN
+        self.product_tmpl_bin.active = False
+        # WHEN
+        res = self.execute(
+            """
+            query getProductTemplate($id: Int) {
+                product(id: $id) {
+                    name
+                }
+            }
+            """,
+            variables={"id": self.product_tmpl_bin.id},
+        )
+        # THEN
+        self.assertEqual(res["product"], {"name": None})
+
+    def test_02_query_products_with_category_slug(self):
         # WHEN
         res = self.execute(
             """
@@ -28,7 +45,7 @@ class TestQueryProduct(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["products"]["products"], [{"name": "Pedal Bin"}])
 
-    def test_02_query_product_unpublished_with_category_slug_single(self):
+    def test_03_query_products_unpublished_with_category_slug(self):
         # GIVEN
         self.product_tmpl_bin.is_published = False
         # WHEN
@@ -47,7 +64,7 @@ class TestQueryProduct(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["products"]["products"], [])
 
-    def test_03_query_product_with_category_slug_is_child(self):
+    def test_04_query_products_with_category_slug_is_child(self):
         # GIVEN
         self.product_tmpl_bin.public_categ_ids |= self.public_category_components
         # WHEN
@@ -67,7 +84,7 @@ class TestQueryProduct(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["products"]["products"], [{"name": "Pedal Bin"}])
 
-    def test_04_query_product_with_category_slug_is_parent(self):
+    def test_05_query_products_with_category_slug_is_parent(self):
         # GIVEN
         self.product_tmpl_bin.public_categ_ids |= self.public_category_desks
         # WHEN

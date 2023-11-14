@@ -11,6 +11,8 @@ from odoo.addons.vuestorefront.schemas.objects import (
     SortEnum, MailingContact, MailingList
 )
 
+from ..utils import get_offset
+
 
 def get_search_order(sort):
     sorting = ''
@@ -61,7 +63,9 @@ class MailingContactQuery(graphene.ObjectType):
     )
 
     @staticmethod
-    def resolve_mailing_contacts(self, info, filter, current_page, page_size, search, sort):
+    def resolve_mailing_contacts(
+        self, info, filter, current_page, page_size, search, sort
+    ):
         env = info.context['env']
         order = get_search_order(sort)
 
@@ -74,16 +78,15 @@ class MailingContactQuery(graphene.ObjectType):
         if filter.get('id', False):
             domain += [('id', '=', filter['id'])]
 
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         MailingContact = env['mailing.contact'].sudo()
         total_count = MailingContact.search_count(domain)
-        mailing_contacts = MailingContact.search(domain, limit=page_size, offset=offset, order=order)
-        return MailingContactList(mailing_contacts=mailing_contacts, total_count=total_count)
+        mailing_contacts = MailingContact.search(
+            domain, limit=page_size, offset=offset, order=order
+        )
+        return MailingContactList(
+            mailing_contacts=mailing_contacts, total_count=total_count
+        )
 
 
 # --------------------- #
@@ -139,16 +142,12 @@ class MailingListQuery(graphene.ObjectType):
 
         if filter.get('id', False):
             domain += [('id', '=', filter['id'])]
-
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         MailingList = env["mailing.list"].sudo()
         total_count = MailingList.search_count(domain)
-        mailing_lists = MailingList.search(domain, limit=page_size, offset=offset, order=order)
+        mailing_lists = MailingList.search(
+            domain, limit=page_size, offset=offset, order=order
+        )
         return MailingListList(mailing_lists=mailing_lists, total_count=total_count)
 
 
