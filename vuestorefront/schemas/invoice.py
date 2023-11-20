@@ -13,6 +13,8 @@ from odoo.addons.vuestorefront.schemas.objects import (
     get_document_count_with_check_access
 )
 
+from ..utils import get_offset
+
 
 def get_search_order(sort):
     sorting = ''
@@ -78,15 +80,17 @@ class InvoiceQuery(graphene.ObjectType):
         domain = [
             ('message_partner_ids', 'child_of', [partner.commercial_partner_id.id])
         ]
-
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         AccountMove = env["account.move"]
-        invoices = get_document_with_check_access(AccountMove, domain, sort_order, page_size, offset,
-                                                  error_msg='Invoice does not exist.')
+        invoices = get_document_with_check_access(
+            AccountMove,
+            domain,
+            sort_order,
+            page_size,
+            offset,
+            error_msg='Invoice does not exist.'
+        )
         total_count = get_document_count_with_check_access(AccountMove, domain)
-        return InvoiceList(invoices=invoices and invoices.sudo() or invoices, total_count=total_count)
+        return InvoiceList(
+            invoices=invoices and invoices.sudo() or invoices, total_count=total_count
+        )

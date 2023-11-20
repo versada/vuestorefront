@@ -10,6 +10,7 @@ from odoo import _
 from odoo.addons.vuestorefront.schemas.objects import (
     SortEnum, Product, Attribute, AttributeValue
 )
+from ..utils import get_offset
 
 
 def get_search_order(sort):
@@ -34,12 +35,7 @@ def get_search_order(sort):
 def get_product_list(env, current_page, page_size, search, sort, **kwargs):
     Product = env['product.template'].sudo()
     domain = Product.prepare_vsf_domain(search, **kwargs)
-
-    # First offset is 0 but first page is 1
-    if current_page > 1:
-        offset = (current_page - 1) * page_size
-    else:
-        offset = 0
+    offset = get_offset(current_page, page_size)
     order = get_search_order(sort)
     products = Product.search(domain, order=order, offset=offset, limit=page_size)
     # Total count from the whole query is needed for creating proper pagination for it
@@ -68,7 +64,7 @@ class ProductList(graphene.ObjectType):
 class ProductFilterInput(graphene.InputObjectType):
     ids = graphene.List(graphene.Int)
     barcode = graphene.String()
-    category_id = graphene.List(graphene.Int)
+    category_id = graphene.Int()
     category_slug = graphene.String()
     # Deprecated
     attribute_value_id = graphene.List(graphene.Int)
@@ -151,14 +147,21 @@ class ProductQuery(graphene.ObjectType):
     @staticmethod
     def resolve_products(self, info, filter, current_page, page_size, search, sort):
         env = info.context["env"]
-        products, total_count, attribute_values, min_price, max_price = get_product_list(
-            env, current_page, page_size, search, sort, **filter)
-        return ProductList(products=products, total_count=total_count, attribute_values=attribute_values,
-                           min_price=min_price, max_price=max_price)
+        (
+            products, total_count, attribute_values, min_price, max_price
+        ) = get_product_list(env, current_page, page_size, search, sort, **filter)
+        return ProductList(
+            products=products,
+            total_count=total_count,
+            attribute_values=attribute_values,
+            min_price=min_price, max_price=max_price
+        )
 
     @staticmethod
     def resolve_attribute(self, info, id):
-        return info.context["env"]["product.attribute"].search([('id', '=', id)], limit=1)
+        return info.context["env"]["product.attribute"].search(
+            [('id', '=', id)], limit=1
+        )
 
     @staticmethod
     def resolve_product_variant(self, info, product_template_id, combination_id):
