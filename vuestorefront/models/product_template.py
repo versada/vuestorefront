@@ -163,19 +163,8 @@ class ProductTemplate(models.Model):
             for n in name.split(" "):
                 domains.append([('name', 'ilike', n)])
         if search:
-            for srch in search.split(" "):
-                domains.append(
-                    [
-                        '|',
-                        '|',
-                        '|',
-                        ('name', 'ilike', srch),
-                        ('description_sale', 'like', srch),
-                        ('default_code', 'like', srch),
-                        ('barcode', 'ilike', srch)
-                    ]
-                )
-
+            for name in search.split(" "):
+                domains.append(self._get_product_search_name_domain(name))
         # Product Price Filter
         if kwargs.get('min_price', False):
             domains.append([('list_price', '>=', float(kwargs['min_price']))])
@@ -213,3 +202,15 @@ class ProductTemplate(models.Model):
     def is_vsf_published_only(self, **kwargs):
         """Check if product search is for published products only."""
         return True
+
+    @api.model
+    def _get_product_search_name_domain(self, name):
+        return [
+            '|',
+            '|',
+            '|',
+            ('name', 'ilike', name),
+            ('description_sale', 'like', name),
+            ('default_code', 'like', name),
+            ('barcode', 'ilike', name)
+        ]
