@@ -11,6 +11,7 @@ class TestVuestorefrontCommon(SavepointCase):
         super().setUpClass()
         cls.Website = cls.env["website"]
         cls.ProductProduct = cls.env["product.product"]
+        cls.ResUsers = cls.env['res.users']
         cls.ResPartner = cls.env["res.partner"]
         cls.PaymentTransaction = cls.env['payment.transaction']
         cls.SaleOrder = cls.env["sale.order"]

@@ -52,3 +52,14 @@ class ResUsers(models.Model):
             with self.env.cr.savepoint():
                 template.with_context(lang=user.lang, signup_url=signup_url).send_mail(user.id, force_send=not create_mode, raise_exception=True)
             _logger.info("Password reset email sent for user <%s> to <%s>", user.login, user.email)
+
+    @api.model
+    def prepare_vsf_signup_vals(self, name, login, password, **kw):
+        vals = {
+            'name': name,
+            'login': login,
+            'password': password,
+        }
+        if 'vat' in kw:
+            vals['vat'] = kw['vat']
+        return vals

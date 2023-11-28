@@ -154,6 +154,7 @@ class Partner(OdooObjectType):
     billing_address = graphene.Field(lambda: Partner)
     is_company = graphene.Boolean(required=True)
     company = graphene.Field(lambda: Partner)
+    company_name = graphene.String()
     contacts = graphene.List(graphene.NonNull(lambda: Partner))
     signup_token = graphene.String()
     signup_valid = graphene.String()
@@ -161,6 +162,7 @@ class Partner(OdooObjectType):
     image = graphene.String()
     public_pricelist = graphene.Field(lambda: Pricelist)
     current_pricelist = graphene.Field(lambda: Pricelist)
+    vat = graphene.String()
 
     def resolve_country(self, info):
         return self.country_id or None
