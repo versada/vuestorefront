@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
     Copyright 2023 ODOOGAP/PROMPTEQUATION LDA
     License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
@@ -16,13 +16,23 @@
                         <item>
                             <g:title><t t-esc="product_info['title']"/></g:title>
                             <g:link><t t-esc="product_info['link']"/></g:link>
-                            <g:description><t t-esc="product_info['description']"/></g:description>
-                            <g:image_link><t t-esc="product_info['image_link']"/></g:image_link>
+                            <g:description><t
+                                    t-esc="product_info['description']"
+                                /></g:description>
+                            <g:image_link><t
+                                    t-esc="product_info['image_link']"
+                                /></g:image_link>
                             <g:price><t t-esc="product_info['price']"/></g:price>
-                            <g:product_type><t t-esc="product_info['product_type']"/></g:product_type>
-                            <g:condition><t t-esc="product_info['condition']"/></g:condition>
+                            <g:product_type><t
+                                    t-esc="product_info['product_type']"
+                                /></g:product_type>
+                            <g:condition><t
+                                    t-esc="product_info['condition']"
+                                /></g:condition>
                             <g:id><t t-esc="product_info['id']"/></g:id>
-                            <g:availability><t t-esc="product_info['availability']"/></g:availability>
+                            <g:availability><t
+                                    t-esc="product_info['availability']"
+                                /></g:availability>
                             <g:brand><t t-esc="product_info['brand']"/></g:brand>
                             <g:mpn><t t-esc="product_info['mpn']"/></g:mpn>
                             <g:adult><t t-esc="product_info['adult']"/></g:adult>

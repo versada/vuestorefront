@@ -1,11 +1,17 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 ODOOGAP/PROMPTEQUATION LDA
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
 import graphene
-from odoo.addons.vuestorefront.schemas.objects import Order, Partner
-from odoo.addons.website_mass_mailing.controllers.main import MassMailController
+
 from odoo.http import request
+
+from odoo.addons.website_mass_mailing.controllers.main import MassMailController
+
+from .objects import Order, Partner
+
+
+def predicate_order_line_id(line_id):
+    return lambda r: r.id == line_id
 
 
 class Cart(graphene.Interface):
@@ -25,14 +31,14 @@ class ShoppingCartQuery(graphene.ObjectType):
     @staticmethod
     def resolve_cart(self, info):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=True)
-        if order and order.state != 'draft':
-            request.session['sale_order_id'] = None
+        if order and order.state != "draft":
+            request.session["sale_order_id"] = None
             order = website.sale_get_order(force_create=True)
         if order:
-            order.order_line.filtered(lambda l: not l.product_id.active).unlink()
+            order.order_line.filtered(lambda r: not r.product_id.active).unlink()
         return CartData(order=order)
 
 
@@ -46,11 +52,11 @@ class CartAddItem(graphene.Mutation):
     @staticmethod
     def mutate(self, info, product_id, quantity):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
         # Forcing the website_id to be passed to the Order
-        order.write({'website_id': website.id})
+        order.write({"website_id": website.id})
         order._cart_update(product_id=product_id, add_qty=quantity)
         return CartData(order=order)
 
@@ -65,13 +71,15 @@ class CartUpdateItem(graphene.Mutation):
     @staticmethod
     def mutate(self, info, line_id, quantity):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
         line = order.order_line.filtered(lambda rec: rec.id == line_id)
         # Reset Warning Stock Message always before a new update
         line.shop_warning = ""
-        order._cart_update(product_id=line.product_id.id, line_id=line.id, set_qty=quantity)
+        order._cart_update(
+            product_id=line.product_id.id, line_id=line.id, set_qty=quantity
+        )
         return CartData(order=order)
 
 
@@ -84,7 +92,7 @@ class CartRemoveItem(graphene.Mutation):
     @staticmethod
     def mutate(self, info, line_id):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
         line = order.order_line.filtered(lambda rec: rec.id == line_id)
@@ -98,7 +106,7 @@ class CartClear(graphene.Mutation):
     @staticmethod
     def mutate(self, info):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
         order.order_line.sudo().unlink()
@@ -114,7 +122,7 @@ class SetShippingMethod(graphene.Mutation):
     @staticmethod
     def mutate(self, info, shipping_method_id):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
 
@@ -126,6 +134,7 @@ class SetShippingMethod(graphene.Mutation):
 # ---------------------------------------------------#
 #      Additional Mutations that can be useful       #
 # ---------------------------------------------------#
+
 
 class ProductInput(graphene.InputObjectType):
     id = graphene.Int(required=True)
@@ -146,14 +155,14 @@ class CartAddMultipleItems(graphene.Mutation):
     @staticmethod
     def mutate(self, info, products):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
         # Forcing the website_id to be passed to the Order
-        order.write({'website_id': website.id})
+        order.write({"website_id": website.id})
         for product in products:
-            product_id = product['id']
-            quantity = product['quantity']
+            product_id = product["id"]
+            quantity = product["quantity"]
             order._cart_update(product_id=product_id, add_qty=quantity)
         return CartData(order=order)
 
@@ -167,16 +176,18 @@ class CartUpdateMultipleItems(graphene.Mutation):
     @staticmethod
     def mutate(self, info, lines):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
         for line in lines:
-            line_id = line['id']
-            quantity = line['quantity']
-            line = order.order_line.filtered(lambda rec: rec.id == line_id)
+            line_id = line["id"]
+            quantity = line["quantity"]
+            line = order.order_line.filtered(predicate_order_line_id(line_id))
             # Reset Warning Stock Message always before a new update
             line.shop_warning = ""
-            order._cart_update(product_id=line.product_id.id, line_id=line.id, set_qty=quantity)
+            order._cart_update(
+                product_id=line.product_id.id, line_id=line.id, set_qty=quantity
+            )
         return CartData(order=order)
 
 
@@ -189,11 +200,11 @@ class CartRemoveMultipleItems(graphene.Mutation):
     @staticmethod
     def mutate(self, info, line_ids):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
         for line_id in line_ids:
-            line = order.order_line.filtered(lambda rec: rec.id == line_id)
+            line = order.order_line.filtered(predicate_order_line_id(line_id))
             line.unlink()
         return CartData(order=order)
 
@@ -208,34 +219,38 @@ class CreateUpdatePartner(graphene.Mutation):
 
     @staticmethod
     def mutate(self, info, name, email, subscribe_newsletter):
-        env = info.context['env']
-        website = env['website'].get_current_website()
+        env = info.context["env"]
+        website = env["website"].get_current_website()
         request.website = website
         order = website.sale_get_order(force_create=1)
 
         data = {
-            'name': name,
-            'email': email,
+            "name": name,
+            "email": email,
         }
 
         partner = order.partner_id
 
         # Is public user
         if partner.id == website.user_id.sudo().partner_id.id:
-            partner = env['res.partner'].sudo().create(data)
+            partner = env["res.partner"].sudo().create(data)
 
-            order.write({
-                'partner_id': partner.id,
-                'partner_invoice_id': partner.id,
-                'partner_shipping_id': partner.id,
-            })
+            order.write(
+                {
+                    "partner_id": partner.id,
+                    "partner_invoice_id": partner.id,
+                    "partner_shipping_id": partner.id,
+                }
+            )
         else:
             partner.write(data)
 
         # Subscribe to newsletter
         if subscribe_newsletter:
             if website.vsf_mailing_list_id:
-                MassMailController().subscribe(website.vsf_mailing_list_id.id, email, 'email')
+                MassMailController().subscribe(
+                    website.vsf_mailing_list_id.id, email, "email"
+                )
 
         return partner
 
@@ -245,8 +260,18 @@ class ShopMutation(graphene.ObjectType):
     cart_update_item = CartUpdateItem.Field(description="Update Item")
     cart_remove_item = CartRemoveItem.Field(description="Remove Item")
     cart_clear = CartClear.Field(description="Cart Clear")
-    cart_add_multiple_items = CartAddMultipleItems.Field(description="Add Multiple Items")
-    cart_update_multiple_items = CartUpdateMultipleItems.Field(description="Update Multiple Items")
-    cart_remove_multiple_items = CartRemoveMultipleItems.Field(description="Remove Multiple Items")
-    set_shipping_method = SetShippingMethod.Field(description="Set Shipping Method on Cart")
-    create_update_partner = CreateUpdatePartner.Field(description="Create or update a partner for guest checkout")
+    cart_add_multiple_items = CartAddMultipleItems.Field(
+        description="Add Multiple Items"
+    )
+    cart_update_multiple_items = CartUpdateMultipleItems.Field(
+        description="Update Multiple Items"
+    )
+    cart_remove_multiple_items = CartRemoveMultipleItems.Field(
+        description="Remove Multiple Items"
+    )
+    set_shipping_method = SetShippingMethod.Field(
+        description="Set Shipping Method on Cart"
+    )
+    create_update_partner = CreateUpdatePartner.Field(
+        description="Create or update a partner for guest checkout"
+    )

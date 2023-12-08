@@ -1,14 +1,15 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 ODOOGAP/PROMPTEQUATION LDA
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
 import graphene
 from graphql import GraphQLError
-from odoo.http import request
+
 from odoo import _
+from odoo.http import request
 
 from odoo.addons.website_sale_wishlist.controllers.main import WebsiteSaleWishlist
-from odoo.addons.vuestorefront.schemas.objects import WishlistItem
+
+from .objects import WishlistItem
 
 
 class WishlistItems(graphene.Interface):
@@ -28,11 +29,11 @@ class WishlistQuery(graphene.ObjectType):
 
     @staticmethod
     def resolve_wishlist_items(root, info):
-        """ Get current user wishlist items """
-        env = info.context['env']
-        website = env['website'].get_current_website()
+        """Get current user wishlist items."""
+        env = info.context["env"]
+        website = env["website"].get_current_website()
         request.website = website
-        wishlist_items = env['product.wishlist'].current()
+        wishlist_items = env["product.wishlist"].current()
         total_count = len(wishlist_items)
         return WishlistData(wishlist_items=wishlist_items, total_count=total_count)
 
@@ -46,37 +47,39 @@ class WishlistAddItem(graphene.Mutation):
     @staticmethod
     def mutate(self, info, product_id):
         env = info.context["env"]
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
 
-        values = env['product.wishlist'].with_context(display_default_code=False).current()
+        values = (
+            env["product.wishlist"].with_context(display_default_code=False).current()
+        )
         if values.filtered(lambda v: v.product_id.id == product_id):
-            raise GraphQLError(_('Product already exists in the Wishlist.'))
+            raise GraphQLError(_("Product already exists in the Wishlist."))
 
         WebsiteSaleWishlist().add_to_wishlist(product_id)
 
-        wishlist_items = env['product.wishlist'].current()
+        wishlist_items = env["product.wishlist"].current()
         total_count = len(wishlist_items)
         return WishlistData(wishlist_items=wishlist_items, total_count=total_count)
 
 
 class WishlistRemoveItem(graphene.Mutation):
     class Arguments:
-       wish_id = graphene.Int(required=True)
+        wish_id = graphene.Int(required=True)
 
     Output = WishlistData
 
     @staticmethod
     def mutate(self, info, wish_id):
-        env = info.context['env']
-        Wishlist = env['product.wishlist'].sudo()
+        env = info.context["env"]
+        Wishlist = env["product.wishlist"].sudo()
 
-        wish_id = Wishlist.search([('id', '=', wish_id)], limit=1)
+        wish_id = Wishlist.search([("id", "=", wish_id)], limit=1)
         wish_id.unlink()
 
-        website = env['website'].get_current_website()
+        website = env["website"].get_current_website()
         request.website = website
-        wishlist_items = env['product.wishlist'].current()
+        wishlist_items = env["product.wishlist"].current()
 
         total_count = len(wishlist_items)
         return WishlistData(wishlist_items=wishlist_items, total_count=total_count)

@@ -1,31 +1,32 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 ODOOGAP/PROMPTEQUATION LDA
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
 import graphene
 from graphql import GraphQLError
-from odoo.http import request
-from odoo import _
 
-from odoo.addons.vuestorefront.schemas.objects import (
-    SortEnum, Invoice,
+from odoo import _
+from odoo.http import request
+
+from .objects import (
+    Invoice,
+    SortEnum,
+    get_document_count_with_check_access,
     get_document_with_check_access,
-    get_document_count_with_check_access
 )
 
 
 def get_search_order(sort):
-    sorting = ''
+    sorting = ""
     for field, val in sort.items():
         if sorting:
-            sorting += ', '
-        sorting += '%s %s' % (field, val.value)
+            sorting += ", "
+        sorting += "%s %s" % (field, val.value)
 
     # Add id as last factor, so we can consistently get the same results
     if sorting:
-        sorting += ', id ASC'
+        sorting += ", id ASC"
     else:
-        sorting = 'id ASC'
+        sorting = "id ASC"
 
     return sorting
 
@@ -57,14 +58,16 @@ class InvoiceQuery(graphene.ObjectType):
         Invoices,
         current_page=graphene.Int(default_value=1),
         page_size=graphene.Int(default_value=10),
-        sort=graphene.Argument(InvoiceSortInput, default_value={})
+        sort=graphene.Argument(InvoiceSortInput, default_value={}),
     )
 
     @staticmethod
     def resolve_invoice(self, info, id):
-        AccountMove = info.context["env"]['account.move']
-        error_msg = 'Invoice does not exist.'
-        invoice = get_document_with_check_access(AccountMove, [('id', '=', id)], error_msg=error_msg)
+        AccountMove = info.context["env"]["account.move"]
+        error_msg = "Invoice does not exist."
+        invoice = get_document_with_check_access(
+            AccountMove, [("id", "=", id)], error_msg=error_msg
+        )
         if not invoice:
             raise GraphQLError(_(error_msg))
         return invoice.sudo()
@@ -76,7 +79,7 @@ class InvoiceQuery(graphene.ObjectType):
         partner = user.partner_id
         sort_order = get_search_order(sort)
         domain = [
-            ('message_partner_ids', 'child_of', [partner.commercial_partner_id.id])
+            ("message_partner_ids", "child_of", [partner.commercial_partner_id.id])
         ]
 
         # First offset is 0 but first page is 1
@@ -86,7 +89,15 @@ class InvoiceQuery(graphene.ObjectType):
             offset = 0
 
         AccountMove = env["account.move"]
-        invoices = get_document_with_check_access(AccountMove, domain, sort_order, page_size, offset,
-                                                  error_msg='Invoice does not exist.')
+        invoices = get_document_with_check_access(
+            AccountMove,
+            domain,
+            sort_order,
+            page_size,
+            offset,
+            error_msg="Invoice does not exist.",
+        )
         total_count = get_document_count_with_check_access(AccountMove, domain)
-        return InvoiceList(invoices=invoices and invoices.sudo() or invoices, total_count=total_count)
+        return InvoiceList(
+            invoices=invoices and invoices.sudo() or invoices, total_count=total_count
+        )

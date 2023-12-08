@@ -68,7 +68,10 @@
       <field name="name">Shirts</field>
       <field name="sequence">33</field>
     </record>
-    <record id="public_category_women_clothing_t-shirts" model="product.public.category">
+    <record
+        id="public_category_women_clothing_t-shirts"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_women_clothing')"/>
       <field name="name">T-shirts</field>
       <field name="sequence">33</field>
@@ -93,7 +96,10 @@
       <field name="name">Dresses</field>
       <field name="sequence">38</field>
     </record>
-    <record id="public_category_women_clothing_swimwear" model="product.public.category">
+    <record
+        id="public_category_women_clothing_swimwear"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_women_clothing')"/>
       <field name="name">Swimwear</field>
       <field name="sequence">39</field>
@@ -115,7 +121,10 @@
       <field name="name">Boots</field>
       <field name="sequence">43</field>
     </record>
-    <record id="public_category_women_shoes_ankle_boots" model="product.public.category">
+    <record
+        id="public_category_women_shoes_ankle_boots"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_women_shoes')"/>
       <field name="name">Ankle boots</field>
       <field name="sequence">44</field>
@@ -130,7 +139,10 @@
       <field name="name">Ballerinas</field>
       <field name="sequence">46</field>
     </record>
-    <record id="public_category_women_shoes_lace-up_shoes" model="product.public.category">
+    <record
+        id="public_category_women_shoes_lace-up_shoes"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_women_shoes')"/>
       <field name="name">Lace-up shoes</field>
       <field name="sequence">47</field>
@@ -145,7 +157,10 @@
       <field name="name">Sandals</field>
       <field name="sequence">49</field>
     </record>
-    <record id="public_category_women_shoes_winterboots" model="product.public.category">
+    <record
+        id="public_category_women_shoes_winterboots"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_women_shoes')"/>
       <field name="name">Winterboots</field>
       <field name="sequence">50</field>
@@ -162,7 +177,10 @@
       <field name="name">Clutches</field>
       <field name="sequence">53</field>
     </record>
-    <record id="public_category_women_bags_shoulder_bags" model="product.public.category">
+    <record
+        id="public_category_women_bags_shoulder_bags"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_women_bags')"/>
       <field name="name">Shoulder Bags</field>
       <field name="sequence">54</field>
@@ -182,7 +200,10 @@
       <field name="name">Wallets</field>
       <field name="sequence">57</field>
     </record>
-    <record id="public_category_women_bags_bucketbag_packbag" model="product.public.category">
+    <record
+        id="public_category_women_bags_bucketbag_packbag"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_women_bags')"/>
       <field name="name">Bucketbag/packbag</field>
       <field name="sequence">58</field>
@@ -280,7 +301,10 @@
       <field name="name">Boots</field>
       <field name="sequence">75</field>
     </record>
-    <record id="public_category_men_shoes_lace-up_shoes" model="product.public.category">
+    <record
+        id="public_category_men_shoes_lace-up_shoes"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_men_shoes')"/>
       <field name="name">Lace-up shoes</field>
       <field name="sequence">76</field>
@@ -327,7 +351,10 @@
       <field name="name">Wallets</field>
       <field name="sequence">85</field>
     </record>
-    <record id="public_category_men_bags_bucketbag_packbag" model="product.public.category">
+    <record
+        id="public_category_men_bags_bucketbag_packbag"
+        model="product.public.category"
+    >
       <field name="parent_id" eval="ref('public_category_men_bags')"/>
       <field name="name">Bucketbag/packbag</field>
       <field name="sequence">86</field>

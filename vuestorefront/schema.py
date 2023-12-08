@@ -1,15 +1,25 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 ODOOGAP/PROMPTEQUATION LDA
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
 import graphene
 
 from odoo.addons.graphql_base import OdooObjectType
-from odoo.addons.vuestorefront.schemas import (
-    country, category, product, order,
-    invoice, contact_us, user_profile, sign,
-    address, wishlist, shop, payment,
-    mailing_list, website,
+
+from .schemas import (
+    address,
+    category,
+    contact_us,
+    country,
+    invoice,
+    mailing_list,
+    order,
+    payment,
+    product,
+    shop,
+    sign,
+    user_profile,
+    website,
+    wishlist,
 )
 
 
@@ -51,7 +61,16 @@ class Mutation(
 schema = graphene.Schema(
     query=Query,
     mutation=Mutation,
-    types=[country.CountryList, category.CategoryList, product.ProductList, product.ProductVariantData, order.OrderList,
-           invoice.InvoiceList, wishlist.WishlistData, shop.CartData, mailing_list.MailingContactList,
-           mailing_list.MailingListList]
+    types=[
+        country.CountryList,
+        category.CategoryList,
+        product.ProductList,
+        product.ProductVariantData,
+        order.OrderList,
+        invoice.InvoiceList,
+        wishlist.WishlistData,
+        shop.CartData,
+        mailing_list.MailingContactList,
+        mailing_list.MailingListList,
+    ],
 )
