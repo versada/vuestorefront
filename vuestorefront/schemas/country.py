@@ -1,26 +1,23 @@
-# -*- coding: utf-8 -*-
 # Copyright 2023 ODOOGAP/PROMPTEQUATION LDA
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 
 import graphene
 
-from odoo.addons.vuestorefront.schemas.objects import (
-    SortEnum, Country
-)
+from .objects import Country, SortEnum
 
 
 def get_search_order(sort):
-    sorting = ''
+    sorting = ""
     for field, val in sort.items():
         if sorting:
-            sorting += ', '
-        sorting += '%s %s' % (field, val.value)
+            sorting += ", "
+        sorting += "%s %s" % (field, val.value)
 
     # Add id as last factor, so we can consistently get the same results
     if sorting:
-        sorting += ', id ASC'
+        sorting += ", id ASC"
     else:
-        sorting = 'id ASC'
+        sorting = "id ASC"
 
     return sorting
 
@@ -55,12 +52,12 @@ class CountryQuery(graphene.ObjectType):
         current_page=graphene.Int(default_value=1),
         page_size=graphene.Int(default_value=20),
         search=graphene.String(default_value=False),
-        sort=graphene.Argument(CountrySortInput, default_value={})
+        sort=graphene.Argument(CountrySortInput, default_value={}),
     )
 
     @staticmethod
     def resolve_country(self, info, id):
-        return info.context['env']['res.country'].search([('id', '=', id)], limit=1)
+        return info.context["env"]["res.country"].search([("id", "=", id)], limit=1)
 
     @staticmethod
     def resolve_countries(self, info, filter, current_page, page_size, search, sort):
@@ -70,10 +67,10 @@ class CountryQuery(graphene.ObjectType):
 
         if search:
             for srch in search.split(" "):
-                domain += [('name', 'ilike', srch)]
+                domain += [("name", "ilike", srch)]
 
-        if filter.get('id'):
-            domain += [('id', '=', filter['id'])]
+        if filter.get("id"):
+            domain += [("id", "=", filter["id"])]
 
         # First offset is 0 but first page is 1
         if current_page > 1:
