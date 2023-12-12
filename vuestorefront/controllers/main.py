@@ -201,13 +201,13 @@ class GraphQLController(http.Controller, GraphQLControllerMixin):
 
         if website.default_lang_id:
             lang_code = website.default_lang_id.code
-            domain = [("website_slug", "!=", False)]
+            domain = [("slug", "!=", False)]
 
             for category in (
                 request.env["product.public.category"].sudo().search(domain)
             ):
                 category = category.with_context(lang=lang_code)
-                categories.append(category.website_slug)
+                categories.append(category.slug)
 
         return Response(
             json.dumps(categories),
@@ -223,14 +223,14 @@ class GraphQLController(http.Controller, GraphQLControllerMixin):
 
         if website.default_lang_id:
             lang_code = website.default_lang_id.code
-            domain = [("website_published", "=", True), ("website_slug", "!=", False)]
+            domain = [("website_published", "=", True), ("slug", "!=", False)]
 
             for product in request.env["product.template"].sudo().search(domain):
                 product = product.with_context(lang=lang_code)
 
-                url_parsed = urlparse(product.website_slug)
+                url_parsed = urlparse(product.slug)
                 name = os.path.basename(url_parsed.path)
-                path = product.website_slug.replace(name, "")
+                path = product.slug.replace(name, "")
 
                 products.append(
                     {

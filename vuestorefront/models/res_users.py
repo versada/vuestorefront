@@ -3,7 +3,7 @@
 
 import logging
 
-from odoo import _, models
+from odoo import _, api, models
 from odoo.exceptions import UserError
 from odoo.http import request
 
@@ -68,3 +68,14 @@ class ResUsers(models.Model):
                 user.login,
                 user.email,
             )
+
+    @api.model
+    def prepare_vsf_signup_vals(self, name, login, password, **kw):
+        vals = {
+            "name": name,
+            "login": login,
+            "password": password,
+        }
+        if "vat" in kw:
+            vals["vat"] = kw["vat"]
+        return vals

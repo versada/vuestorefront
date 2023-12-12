@@ -7,6 +7,7 @@ from graphql import GraphQLError
 from odoo import _
 from odoo.http import request
 
+from ..utils import get_offset
 from .objects import (
     Invoice,
     SortEnum,
@@ -82,12 +83,7 @@ class InvoiceQuery(graphene.ObjectType):
             ("message_partner_ids", "child_of", [partner.commercial_partner_id.id])
         ]
 
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         AccountMove = env["account.move"]
         invoices = get_document_with_check_access(
             AccountMove,

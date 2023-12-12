@@ -3,6 +3,7 @@
 
 import graphene
 
+from ..utils import get_offset
 from .objects import Category, SortEnum
 
 
@@ -20,7 +21,7 @@ def get_search_order(sort):
 
 
 class CategoryFilterInput(graphene.InputObjectType):
-    id = graphene.List(graphene.Int)
+    ids = graphene.List(graphene.Int)
     parent = graphene.Boolean()
 
 
@@ -57,18 +58,15 @@ class CategoryQuery(graphene.ObjectType):
     def resolve_category(self, info, id=None, slug=None):
         env = info.context["env"]
         Category = env["product.public.category"]
-
         domain = env["website"].get_current_website().website_domain()
-
         if id:
             domain += [("id", "=", id)]
             category = Category.search(domain, limit=1)
         elif slug:
-            domain += [("website_slug", "=", slug)]
+            domain += [("slug", "=", slug)]
             category = Category.search(domain, limit=1)
         else:
             category = Category
-
         return category
 
     @staticmethod
@@ -76,24 +74,15 @@ class CategoryQuery(graphene.ObjectType):
         env = info.context["env"]
         order = get_search_order(sort)
         domain = env["website"].get_current_website().website_domain()
-
         if search:
             for srch in search.split(" "):
                 domain += [("name", "ilike", srch)]
-
-        if filter.get("id"):
-            domain += [("id", "in", filter["id"])]
-
+        if filter.get("ids"):
+            domain += [("id", "in", filter["ids"])]
         # Parent if is a Top Category
         if filter.get("parent"):
             domain += [("parent_id", "=", False)]
-
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         ProductPublicCategory = env["product.public.category"]
         total_count = ProductPublicCategory.search_count(domain)
         categories = ProductPublicCategory.search(

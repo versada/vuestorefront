@@ -15,6 +15,10 @@ from odoo.addons.website_mass_mailing.controllers.main import MassMailController
 from .objects import User
 
 
+class UserRegisterExtraInput(graphene.InputObjectType):
+    vat = graphene.String()
+
+
 class Login(graphene.Mutation):
     class Arguments:
         email = graphene.String(required=True)
@@ -63,37 +67,29 @@ class Register(graphene.Mutation):
         email = graphene.String(required=True)
         password = graphene.String(required=True)
         subscribe_newsletter = graphene.Boolean(default_value=False)
+        extra = UserRegisterExtraInput(default_value={})
 
     Output = User
 
     @staticmethod
-    def mutate(self, info, name, email, password, subscribe_newsletter):
+    def mutate(self, info, name, email, password, subscribe_newsletter, extra):
         env = info.context["env"]
+        ResUsers = env["res.users"]
         website = env["website"].get_current_website()
         request.website = website
-
         # Set email in lowercase
         email = email.lower()
-
-        data = {
-            "name": name,
-            "login": email,
-            "password": password,
-        }
-
-        if env["res.users"].sudo().search([("login", "=", data["login"])], limit=1):
+        data = ResUsers.prepare_vsf_signup_vals(name, email, password, **extra)
+        if ResUsers.sudo().search_count([("login", "=", data["login"])], limit=1):
             raise GraphQLError(
                 _("Another user is already registered using this email address.")
             )
-
         env["res.users"].sudo().signup(data)
-
         # Subscribe Newsletter
         if website and website.vsf_mailing_list_id and subscribe_newsletter:
             MassMailController().subscribe(
                 website.vsf_mailing_list_id.id, email, "email"
             )
-
         return env["res.users"].sudo().search([("login", "=", data["login"])], limit=1)
 
 
