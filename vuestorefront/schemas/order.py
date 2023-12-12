@@ -7,6 +7,7 @@ from graphql import GraphQLError
 from odoo import _
 from odoo.http import request
 
+from ..utils import get_offset
 from .objects import (
     InvoiceStatus,
     Order,
@@ -32,6 +33,10 @@ def get_search_order(sort):
         sorting = "id ASC"
 
     return sorting
+
+
+class UpdateOrderInput(graphene.InputObjectType):
+    client_order_ref = graphene.String()
 
 
 class OrderFilterInput(graphene.InputObjectType):
@@ -106,12 +111,7 @@ class OrderQuery(graphene.ObjectType):
             ]
             domain += [("invoice_status", "in", invoice_status)]
 
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         SaleOrder = env["sale.order"]
         orders = get_document_with_check_access(
             SaleOrder,
@@ -134,6 +134,24 @@ class OrderQuery(graphene.ObjectType):
         request.website = website
         order = website.sale_get_order()
         return order._get_delivery_methods()
+
+
+class UpdateOrder(graphene.Mutation):
+    class Arguments:
+        data = UpdateOrderInput(required=True)
+
+    Output = Order
+
+    @staticmethod
+    def mutate(self, info, data):
+        env = info.context["env"]
+        website = env["website"].get_current_website()
+        request.website = website
+        order = website.sale_get_order(force_create=True)
+        vals = order.prepare_vsf_vals(data)
+        if vals:
+            order.write(vals)
+        return order
 
 
 class ApplyCoupon(graphene.Mutation):
@@ -191,5 +209,6 @@ class ApplyGiftCard(graphene.Mutation):
 
 
 class OrderMutation(graphene.ObjectType):
+    update_order = UpdateOrder.Field(description="Update Order")
     apply_coupon = ApplyCoupon.Field(description="Apply Coupon")
     apply_gift_card = ApplyGiftCard.Field(description="Apply Gift Card")

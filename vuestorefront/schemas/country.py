@@ -3,6 +3,7 @@
 
 import graphene
 
+from ..utils import get_offset
 from .objects import Country, SortEnum
 
 
@@ -72,12 +73,7 @@ class CountryQuery(graphene.ObjectType):
         if filter.get("id"):
             domain += [("id", "=", filter["id"])]
 
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         Country = env["res.country"]
         total_count = Country.search_count(domain)
         countries = Country.search(domain, limit=page_size, offset=offset, order=order)

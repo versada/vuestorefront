@@ -125,26 +125,37 @@ class InvalidateCache(models.Model):
                 # FIXME: this probably should not be done.
                 self.env.cr.commit()  # pylint: disable=invalid-commit
 
+    # TODO: these methods don't make sense. They have same code. Need
+    # to redesign this, when its clear what they actually should return.
     def _get_product_tags(self, product_ids):
         tags = ",".join(f"P{product_id}" for product_id in product_ids)
-        category_ids = (
+        categories = (
             self.env["product.template"]
             .search([("id", "in", product_ids)])
-            .mapped("public_categ_slug_ids")
-            .ids
+            .mapped("public_categ_ids")
         )
-        if category_ids:
-            tags += "," + ",".join(f"C{category_id}" for category_id in category_ids)
+        ancestor_categs = self.env["product.public.category"]
+        for parent in categories.get_ancestors():
+            ancestor_categs |= parent
+        categories |= ancestor_categs
+        if categories:
+            tags += "," + ",".join(f"C{category_id}" for category_id in categories.ids)
         return tags
 
+    # TODO: this method most likely is incorrect. Should not expect product_ids as
+    # it looks like when its called, it actually calls with category_ids
+    # (product.public.category).
     def _get_category_tags(self, product_ids):
         tags = ",".join(f"P{product_id}" for product_id in product_ids)
-        category_ids = (
+        categories = (
             self.env["product.template"]
             .search([("id", "in", product_ids)])
-            .mapped("public_categ_slug_ids")
-            .ids
+            .mapped("public_categ_ids")
         )
-        if category_ids:
-            tags += "," + ",".join(f"C{category_id}" for category_id in category_ids)
+        ancestor_categs = self.env["product.public.category"]
+        for parent in categories.get_ancestors():
+            ancestor_categs |= parent
+        categories |= ancestor_categs
+        if categories:
+            tags += "," + ",".join(f"C{category_id}" for category_id in categories.ids)
         return tags

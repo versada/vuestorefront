@@ -240,6 +240,7 @@ class Partner(OdooObjectType):
     billing_address = graphene.Field(lambda: Partner)
     is_company = graphene.Boolean(required=True)
     company = graphene.Field(lambda: Partner)
+    company_name = graphene.String()
     contacts = graphene.List(graphene.NonNull(lambda: Partner))
     signup_token = graphene.String()
     signup_valid = graphene.String()
@@ -324,7 +325,7 @@ class Category(OdooObjectType):
         return self.child_id or None
 
     def resolve_slug(self, info):
-        return self.website_slug
+        return self.slug
 
     def resolve_products(self, info):
         return self.product_tmpl_ids or None
@@ -558,7 +559,7 @@ class Product(OdooObjectType):
         return self.free_qty
 
     def resolve_slug(self, info):
-        return self.website_slug
+        return self.slug
 
     def resolve_alternative_products(self, info):
         return self.alternative_product_ids or None

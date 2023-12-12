@@ -9,6 +9,7 @@ from odoo.http import request
 
 from odoo.addons.website_mass_mailing.controllers.main import MassMailController
 
+from ..utils import get_offset
 from .objects import MailingContact, MailingList, SortEnum
 
 
@@ -81,12 +82,7 @@ class MailingContactQuery(graphene.ObjectType):
         if filter.get("id", False):
             domain += [("id", "=", filter["id"])]
 
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         MailingContact = env["mailing.contact"].sudo()
         total_count = MailingContact.search_count(domain)
         mailing_contacts = MailingContact.search(
@@ -158,12 +154,7 @@ class MailingListQuery(graphene.ObjectType):
         if filter.get("id", False):
             domain += [("id", "=", filter["id"])]
 
-        # First offset is 0 but first page is 1
-        if current_page > 1:
-            offset = (current_page - 1) * page_size
-        else:
-            offset = 0
-
+        offset = get_offset(current_page, page_size)
         MailingList = env["mailing.list"].sudo()
         total_count = MailingList.search_count(domain)
         mailing_lists = MailingList.search(
