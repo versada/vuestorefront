@@ -89,6 +89,7 @@ class TestVuestorefrontSaleCommon(TestVuestorefrontCommon):
             "product_id": cls.product_bin.id,
             "product_uom_qty": 10,
             "order_id": cls.sale_1.id,
+            "price_unit": 47.0,
         })
         cls.Website._patch_method(
             "sale_get_order",

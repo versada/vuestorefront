@@ -493,6 +493,8 @@ class PaymentTransaction(OdooObjectType):
     company = graphene.Field(lambda: Partner)
     customer = graphene.Field(lambda: Partner)
     state = PaymentTransactionState()
+    return_url = graphene.String()
+    checkout_url = graphene.String()
 
     def resolve_payment(self, info):
         return self.payment_id or None
@@ -692,15 +694,46 @@ class PaymentIcon(OdooObjectType):
         return '/web/image/payment.icon/{}/image'.format(self.id)
 
 
+class PaymentAcquirerMethodIssuer(OdooObjectType):
+    name = graphene.String()
+    code = graphene.String()
+
+    def resolve_name(self, info):
+        return None
+
+    def resolve_code(self, info):
+        return None
+
+
+class PaymentAcquirerMethod(OdooObjectType):
+    name = graphene.String()
+    code = graphene.String()
+    issuers = graphene.List(graphene.NonNull(PaymentAcquirerMethodIssuer))
+
+    def resolve_name(self, info):
+        return None
+
+    def resolve_code(self, info):
+        return None
+
+    def resolve_issuers(self, info):
+        return None
+
+
 class PaymentAcquirer(OdooObjectType):
     id = graphene.Int(required=True)
     name = graphene.String()
     display_as = graphene.String()
     provider = graphene.String()
     payment_icons = graphene.List(graphene.NonNull(lambda: PaymentIcon))
+    payment_methods = graphene.List(graphene.NonNull(PaymentAcquirerMethod))
 
     def resolve_payment_icons(self, info):
         return self.payment_icon_ids or None
+
+    def resolve_payment_methods(self, info):
+        # Must be implemented if any acquirer has payment methods.
+        return None
 
 
 class MailingList(OdooObjectType):

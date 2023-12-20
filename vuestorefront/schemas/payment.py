@@ -24,6 +24,20 @@ class PaymentAcquirerFilterInput(graphene.InputObjectType):
     access_token = graphene.String()
 
 
+class MakePaymentExtraInput(graphene.InputObjectType):
+    return_url = graphene.String(
+        description="URL to redirect back from payment site."
+        + "This URL can be combined with extra params if payment "
+        + "provider requires it."
+    )
+    method_code = graphene.String(
+        description="Payment Method to use if payment provider has any"
+    )
+    issuer_code = graphene.String(
+        description="Payment Method Issuer to use if payment provider has any"
+    )
+
+
 class PaymentQuery(graphene.ObjectType):
     payment_acquirer = graphene.Field(
         PaymentAcquirer,
@@ -387,11 +401,12 @@ class AdyenPaymentDetails(graphene.Mutation):
 class MakePayment(graphene.Mutation):
     class Arguments:
         acquirer_id = graphene.Int(required=True)
+        extra = MakePaymentExtraInput(default_value={})
 
     Output = PaymentTransaction
 
     @staticmethod
-    def mutate(self, info, acquirer_id):
+    def mutate(self, info, acquirer_id, extra):
         env = info.context['env']
         PaymentAcquirer = env['payment.acquirer'].sudo()
         payment_acquirer = PaymentAcquirer.browse(acquirer_id)
@@ -406,29 +421,8 @@ class MakePayment(graphene.Mutation):
         request.website = website
         order = website.sale_get_order()
         transaction = order._create_payment_transaction({'acquirer_id': acquirer_id})
-        if payment_acquirer.provider == 'transfer':
-            # This is needed to fully handle payment like it is done via odoo
-            # shop (e.g. make sale order change state to sent)
-            MakePayment._handle_transfer_feedback(env, transaction)
-        else:
-            raise GraphQLError(
-                f"Payment Acquirer {payment_acquirer.provider} is currently "
-                + "not supported"
-            )
+        transaction.postprocess_vsf_payment_transaction(**extra)
         return transaction
-
-    # TODO: better move this to odoo model.
-    @staticmethod
-    def _handle_transfer_feedback(env, transaction):
-        # Strange that there is no feedback method on transaction record
-        # directly..
-        data = {
-            'return_url': transaction.return_url,
-            'reference': transaction.reference,
-            'amount': transaction.amount,
-            'currency': transaction.currency_id.name,
-        }
-        env['payment.transaction'].sudo().form_feedback(data, 'transfer')
 
 
 class PaymentMutation(graphene.ObjectType):
