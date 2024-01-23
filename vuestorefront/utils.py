@@ -14,3 +14,7 @@ def to_lower_camel_case(snake_str):
     # with the 'capitalize' method and join them together.
     camel_string = to_camel_case(snake_str)
     return snake_str[0].lower() + camel_string[1:]
+
+
+def get_image_endpoint(model, res_id, fname):
+    return f"/web/image/{model}/{res_id}/{fname}"

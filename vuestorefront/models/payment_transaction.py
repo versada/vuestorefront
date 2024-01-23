@@ -21,6 +21,17 @@ class PaymentTransaction(models.Model):
         if provider == 'transfer':
             self._postprocess_vsf_payment_transaction_transfer(**kw)
 
+    def handle_vsf_payment_update(self, **kw):
+        """Handle payment manually if specific acquirer supports it.
+
+        Intended to be used when payment was not fully processed by
+        normal flow and we need to update payment using specific
+        provider logic.
+
+        Extend to implement update option for specific payment acquirer
+        """
+        self.ensure_one()
+
     def _postprocess_vsf_payment_transaction_transfer(self, **kw):
         self.ensure_one()
         data = {

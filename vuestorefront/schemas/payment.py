@@ -38,6 +38,10 @@ class MakePaymentExtraInput(graphene.InputObjectType):
     )
 
 
+class UpdatePaymentExtraInput(graphene.types.generic.GenericScalar):
+    pass
+
+
 class PaymentQuery(graphene.ObjectType):
     payment_acquirer = graphene.Field(
         PaymentAcquirer,
@@ -425,8 +429,30 @@ class MakePayment(graphene.Mutation):
         return transaction
 
 
+class UpdatePayment(graphene.Mutation):
+    class Arguments:
+        transaction_id = graphene.Int(required=True)
+        extra = UpdatePaymentExtraInput(default_value={})
+
+    Output = PaymentTransaction
+
+    @staticmethod
+    def mutate(self, info, transaction_id, extra):
+        env = info.context['env']
+        transaction = env['payment.transaction'].sudo().browse(transaction_id)
+        if not transaction.exists():
+            raise GraphQLError(
+                "Payment transaction '%s' does not exist.", transaction_id
+            )
+        transaction.handle_vsf_payment_update(**extra)
+        return transaction
+
+
 class PaymentMutation(graphene.ObjectType):
     make_payment = MakePayment.Field(description='Make a payment using acquirer')
+    update_payment = UpdatePayment.Field(
+        description='Update payment using its transaction and extra data'
+    )
     adyen_acquirer_info = AdyenAcquirerInfo.Field(description='Get Adyen Acquirer Info.')
     adyen_payment_methods = AdyenPaymentMethods.Field(description='Get Adyen Payment Methods.')
     adyen_transaction = AdyenTransaction.Field(description='Create Adyen Transaction')
