@@ -12,6 +12,7 @@ _logger = logging.getLogger(__name__)
 class PaymentAcquirer(models.Model):
     _inherit = 'payment.acquirer'
 
+    odoo_active = fields.Boolean('Active on Odoo Website?', default=True)
     vsf_active = fields.Boolean('Active on VSF?')
 
     # Configuration fields

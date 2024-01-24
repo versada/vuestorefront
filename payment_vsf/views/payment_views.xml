@@ -12,6 +12,7 @@
             <field name="inherit_id" ref="payment.acquirer_form"/>
             <field name="arch" type="xml">
                 <field name="website_id" position="after">
+                    <field name="odoo_active"/>
                     <field name="vsf_active"/>
                 </field>
             </field>
