@@ -9,7 +9,10 @@
         <xpath expr="//div[hasclass('card')]//t[@t-set='acquirers_count']" position="before">
             <t t-set="list_acquirers" t-value="[int(acq) for acq in acquirers]"/>
             <t t-set="acquirers" t-value="request.env['payment.acquirer'].browse(list_acquirers)"/>
-            <t t-set="acquirers" t-value="acquirers.filtered(lambda acq: not acq.vsf_active)"/>
+            <t
+                t-set="acquirers"
+                t-value="acquirers.filtered(lambda acq: acq.odoo_active)"
+            />
         </xpath>
     </template>
 
