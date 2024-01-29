@@ -9,6 +9,7 @@ from odoo import models, fields, api
 class Website(models.Model):
     _inherit = 'website'
 
+    vsf_domain = fields.Char(string="Domain for VSF")
     vsf_payment_success_return_url = fields.Char(
         'Payment Success Return Url', required=True, translate=True, default='Dummy'
     )
@@ -16,6 +17,16 @@ class Website(models.Model):
         'Payment Error Return Url', required=True, translate=True, default='Dummy'
     )
     vsf_mailing_list_id = fields.Many2one('mailing.list', 'Newsletter', domain=[('is_public', '=', True)])
+
+    def get_vsf_http_domain(self):
+        self.ensure_one()
+        # Using same logic as standard `_get_http_domain`
+        if not self.vsf_domain:
+            return ''
+        domain = self.vsf_domain
+        if not domain.startswith('http'):
+            domain = 'http://%s' % domain
+        return domain.rstrip('/')
 
     @api.model
     def enable_b2c_reset_password(self):

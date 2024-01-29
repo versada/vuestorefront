@@ -29,7 +29,7 @@ class ProductProduct(models.Model):
             "image": images,
             "offers": {
                 "@type": "Offer",
-                "url": "%s/product/%s" % (website.domain or '', slug(self)),
+                "url": "%s/product/%s" % (website.get_vsf_http_domain(), slug(self)),
                 "priceCurrency": self.currency_id.name,
                 "price": self.list_price,
                 "itemCondition": "https://schema.org/NewCondition",

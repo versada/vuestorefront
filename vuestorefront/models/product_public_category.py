@@ -30,9 +30,7 @@ class ProductPublicCategory(models.Model):
             return self.json_ld
 
         website = self.env['website'].get_current_website()
-        base_url = website.domain
-        if base_url:
-            base_url = base_url.rstrip('/')
+        base_url = website.get_vsf_http_domain()
 
         json_ld = {
             "@context": "https://schema.org",

@@ -1,4 +1,5 @@
 from . import (
+    test_user,
     test_product,
     test_public_category,
     test_query_product,
