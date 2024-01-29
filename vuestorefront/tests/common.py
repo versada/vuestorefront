@@ -24,6 +24,7 @@ class TestVuestorefrontCommon(SavepointCase):
         cls.public_category_components = cls.env.ref(
             'website_sale.public_category_desks_components'
         )
+        cls.company_main = cls.env.ref('base.main_company')
         cls.public_category_bins = cls.env.ref('website_sale.public_category_bins')
         cls.product_bin = cls.env.ref("product.product_product_9")
         cls.product_tmpl_bin = cls.product_bin.product_tmpl_id
@@ -33,6 +34,7 @@ class TestVuestorefrontCommon(SavepointCase):
             'payment.payment_acquirer_transfer'
         )
         cls.product_tmpl_bin.is_published = True
+        cls.website_1.vsf_domain = 'example.com'
 
     def execute(self, query, **kw):
         res = self.graphene_client.execute(query, context={"env": self.env}, **kw)

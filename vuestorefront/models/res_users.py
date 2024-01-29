@@ -31,10 +31,7 @@ class ResUsers(models.Model):
         assert template._name == 'mail.template'
 
         website = request.env['website'].get_current_website()
-        domain = website.domain
-        if domain and domain[-1] == '/':
-            domain = domain[:-1]
-
+        domain = website.get_vsf_http_domain()
         template_values = {
             'email_to': '${object.email|safe}',
             'email_cc': False,
