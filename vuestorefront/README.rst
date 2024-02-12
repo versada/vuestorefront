@@ -40,6 +40,11 @@ Payments
 * Added MakePayment mutation to be handler for all payments. Currently transfer
   payment is supported.
 
+Website Page
+------------
+
+New schema to be able to query odoo website pages and its content.
+
 Login
 =====
 
