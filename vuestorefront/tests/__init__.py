@@ -6,4 +6,5 @@ from . import (
     test_mutate_shop,
     test_query_mutate_payment,
     test_mutate_user,
+    test_query_website_page,
 )

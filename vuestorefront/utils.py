@@ -1,3 +1,6 @@
+from odoo.http import request
+
+
 def get_offset(current_page, page_size):
     # First offset is 0 but first page is 1
     if current_page > 1:
@@ -18,3 +21,9 @@ def to_lower_camel_case(snake_str):
 
 def get_image_endpoint(model, res_id, fname):
     return f"/web/image/{model}/{res_id}/{fname}"
+
+
+def get_website(env):
+    website = env['website'].get_current_website()
+    request.website = website
+    return website

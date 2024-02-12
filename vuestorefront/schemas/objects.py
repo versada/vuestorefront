@@ -765,3 +765,9 @@ class MailingContact(OdooObjectType):
 
     def resolve_subscription_list(self, info):
         return self.subscription_list_ids or None
+
+
+class WebsitePage(OdooObjectType):
+    id = graphene.Int()
+    name = graphene.String()
+    url = graphene.String()
