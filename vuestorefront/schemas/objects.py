@@ -493,6 +493,7 @@ class PaymentTransaction(OdooObjectType):
     company = graphene.Field(lambda: Partner)
     customer = graphene.Field(lambda: Partner)
     state = PaymentTransactionState()
+    state_message = graphene.String()
     return_url = graphene.String()
     checkout_url = graphene.String()
 
