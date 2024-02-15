@@ -1,9 +1,12 @@
 from unittest.mock import patch
 
+from odoo.tests.common import HttpCaseCommon, get_db_name
 
 from . import common
 
 PATH_UTILS_REQ = "odoo.addons.vuestorefront.utils.request"
+# TODO: we should redesign rendering to use it directly without external
+# request call. Then we would need to use these paths, so keeping for now.
 PATH_IR_UI_VIEW_REQ = "odoo.addons.base.models.ir_ui_view.request"
 PATH_WEBSITE_REQ = "odoo.addons.website.models.website.request"
 PATH_WEBSITE_IR_UI_VIEW_REQ = "odoo.addons.website.models.ir_ui_view.request"
@@ -45,7 +48,7 @@ def patch_get_frontend_session_info(cls):
     return patch_it
 
 
-class TestQueryWebsitePage(common.TestVuestorefrontCommon):
+class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -59,17 +62,9 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon):
         cls.WebsiteSeoMetadata._patch_method('get_website_meta', lambda s: {})
 
     @patch(PATH_UTILS_REQ)
-    @patch(PATH_IR_UI_VIEW_REQ)
-    @patch(PATH_PORTAL_IR_UI_VIEW_REQ)
-    @patch(PATH_HTTP_ROUTING_REQ)
-    @patch(PATH_WEBSITE_REQ)
-    @patch(PATH_WEBSITE_IR_UI_VIEW_REQ)
-    @patch(PATH_WEBSITE_IR_HTTP_REQ)
-    @patch(PATH_WEBSITE_RES_LANG_REQ)
-    @patch(PATH_WEB_IR_HTTP_REQ)
-    @patch(PATH_WEBSITE_SALE_WEBSITE_REQ)
     def test_01_query_website_page_with_content_exclude_some_tags(self, *mock_requests):
         # GIVEN
+        self.url_open(f"/web?db={get_db_name()}", timeout=20)
         update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
         # WHEN
         res = self.execute(
@@ -106,7 +101,7 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon):
             }
         )
         content = res["websitePage"]["content"]
-        self.assertIn(f'<html data-website-id="{self.website_1.id}"', content)
+        self.assertIn('</html>', content)
         self.assertNotIn('</header>', content)
         self.assertNotIn('</footer>', content)
 
@@ -144,15 +139,6 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon):
         self.assertEqual(res["websitePages"]["contents"], [""])
 
     @patch(PATH_UTILS_REQ)
-    @patch(PATH_IR_UI_VIEW_REQ)
-    @patch(PATH_PORTAL_IR_UI_VIEW_REQ)
-    @patch(PATH_HTTP_ROUTING_REQ)
-    @patch(PATH_WEBSITE_REQ)
-    @patch(PATH_WEBSITE_IR_UI_VIEW_REQ)
-    @patch(PATH_WEBSITE_IR_HTTP_REQ)
-    @patch(PATH_WEBSITE_RES_LANG_REQ)
-    @patch(PATH_WEB_IR_HTTP_REQ)
-    @patch(PATH_WEBSITE_SALE_WEBSITE_REQ)
     def test_03_query_website_pages_with_content_all_tags(self, *mock_requests):
         # GIVEN
         update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
@@ -193,7 +179,7 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon):
         )
         self.assertEqual(len(res["websitePages"]["contents"]), 1)
         content = res["websitePages"]["contents"][0]
-        self.assertIn(f'<html data-website-id="{self.website_1.id}"', content)
+        self.assertIn('</html>', content)
         self.assertIn('</header>', content)
         self.assertIn('</footer>', content)
 

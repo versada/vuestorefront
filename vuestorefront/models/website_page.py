@@ -1,4 +1,6 @@
 import lxml
+import requests
+from urllib.parse import urljoin
 
 from odoo import models, api
 
@@ -24,19 +26,15 @@ class WebsitePage(models.Model):
     def render_vsf_page(self, **kw):
         self.ensure_one()
         website = get_website(self.env)
+        # NOTE. Even if page has no website set, we assume current
+        # website all the time for now.
+        base_url = website.get_base_url()
+        endpoint = urljoin(base_url, self.url)
         # TODO: make it possible to render page without its layout
         # directly, so we would not need to strip rendered content
         # afterwards.
-        content = self.env["ir.ui.view"]._render_template(
-            self.view_id.id,
-            {
-                'deletable': True,
-                'main_object': self,
-                'website': website,
-            }
-        ).decode()
-        content = self._postprocess_vsf_page_rendering(content, **kw)
-        return content
+        res = requests.get(endpoint)
+        return self._postprocess_vsf_page_rendering(res.text, **kw)
 
     def _postprocess_vsf_page_rendering(self, content, **kw):
         self.ensure_one()
