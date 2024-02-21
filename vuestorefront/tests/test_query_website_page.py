@@ -62,7 +62,7 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
         cls.WebsiteSeoMetadata._patch_method('get_website_meta', lambda s: {})
 
     @patch(PATH_UTILS_REQ)
-    def test_01_query_website_page_with_content_exclude_some_tags(self, *mock_requests):
+    def test_01_query_website_page_exclude_some_content_tags(self, *mock_requests):
         # GIVEN
         self.url_open(f"/web?db={get_db_name()}", timeout=20)
         update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
@@ -70,103 +70,70 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
         res = self.execute(
             """
             query getWebsitePage(
-                $id: Int, $contentRendering: WebsitePageContentInput)
+                $id: Int, $contentOptions: WebsitePageContentInput)
             {
                 websitePage(
                     id: $id,
-                    contentRendering: $contentRendering
+                    contentOptions: $contentOptions
                 ) {
-                    websitePage {
-                        name
-                        url
-                    }
+                    name
+                    url
                     content
                 }
             }
             """,
             variables={
                 "id": self.website_page_contactus.id,
-                "contentRendering": {
-                    "contentIncluded": True,
+                "contentOptions": {
                     "excludedTags": ["header", "footer"]
                 },
             },
         )
         # THEN
+        content = res["websitePage"].pop("content")
         self.assertEqual(
-            res["websitePage"]["websitePage"],
+            res["websitePage"],
             {
                 "name": "Contact Us",
                 "url": "/contactus",
             }
         )
-        content = res["websitePage"]["content"]
         self.assertIn('</html>', content)
         self.assertNotIn('</header>', content)
         self.assertNotIn('</footer>', content)
 
     @patch(PATH_UTILS_REQ)
-    def test_02_query_website_pages_no_content(self, req1):
-        # WHEN
-        res = self.execute(
-            """
-            query getWebsitePages($url: String) {
-                websitePages(
-                    filter: {url: $url}
-                ) {
-                    websitePages {
-                        id
-                        name
-                        url
-                    }
-                    contents
-                }
-            }
-            """,
-            variables={"url": '/contactus'},
-        )
-        # THEN
-        self.assertEqual(
-            res["websitePages"]["websitePages"],
-            [
-                {
-                    "id": self.website_page_contactus.id,
-                    "name": "Contact Us",
-                    "url": "/contactus",
-                }
-            ]
-        )
-        self.assertEqual(res["websitePages"]["contents"], [""])
-
-    @patch(PATH_UTILS_REQ)
-    def test_03_query_website_pages_with_content_all_tags(self, *mock_requests):
+    def test_02_query_website_pages_exclude_some_content_tags(self, *mock_requests):
         # GIVEN
         update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
         # WHEN
         res = self.execute(
             """
             query getWebsitePages(
-            $url: String, $contentRendering: WebsitePageContentInput
+            $url: String, $contentOptions: WebsitePageContentInput
             ) {
                 websitePages(
                     filter: {url: $url},
-                    contentRendering: $contentRendering
+                    contentOptions: $contentOptions
                 ) {
                     websitePages {
                         id
                         name
                         url
+                        content
                     }
-                    contents
                 }
             }
             """,
             variables={
                 "url": '/contactus',
-                "contentRendering": {"contentIncluded": True},
+                "contentOptions": {
+                    "excludedTags": ["header", "footer"]
+                },
             },
         )
         # THEN
+        content = res["websitePages"]["websitePages"][0].pop("content")
         self.assertEqual(
             res["websitePages"]["websitePages"],
             [
@@ -177,8 +144,49 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
                 }
             ]
         )
-        self.assertEqual(len(res["websitePages"]["contents"]), 1)
-        content = res["websitePages"]["contents"][0]
+        self.assertIn('</html>', content)
+        self.assertNotIn('</header>', content)
+        self.assertNotIn('</footer>', content)
+
+    @patch(PATH_UTILS_REQ)
+    def test_03_query_website_pages_no_content_options(self, *mock_requests):
+        # GIVEN
+        update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
+        # WHEN
+        res = self.execute(
+            """
+            query getWebsitePages(
+            $url: String, $contentOptions: WebsitePageContentInput
+            ) {
+                websitePages(
+                    filter: {url: $url},
+                    contentOptions: $contentOptions
+                ) {
+                    websitePages {
+                        id
+                        name
+                        url
+                        content
+                    }
+                }
+            }
+            """,
+            variables={
+                "url": '/contactus',
+            },
+        )
+        # THEN
+        content = res["websitePages"]["websitePages"][0].pop("content")
+        self.assertEqual(
+            res["websitePages"]["websitePages"],
+            [
+                {
+                    "id": self.website_page_contactus.id,
+                    "name": "Contact Us",
+                    "url": "/contactus",
+                }
+            ]
+        )
         self.assertIn('</html>', content)
         self.assertIn('</header>', content)
         self.assertIn('</footer>', content)

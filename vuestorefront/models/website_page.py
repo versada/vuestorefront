@@ -10,6 +10,9 @@ from ..utils import get_website
 class WebsitePage(models.Model):
     _inherit = 'website.page'
 
+    def action_invalidate_vsf_cache(self):
+        return self.mapped("view_id").invalidate_website_page_views_cache()
+
     @api.model
     def prepare_vsf_domain(self, **kw):
         website = get_website(self.env)

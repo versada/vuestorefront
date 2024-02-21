@@ -772,3 +772,8 @@ class WebsitePage(OdooObjectType):
     id = graphene.Int()
     name = graphene.String()
     url = graphene.String()
+    content = graphene.String()
+
+    def resolve_content(self, info):
+        options = self.env.context.get("website_page_content_options", {})
+        return self.render_vsf_page(**options)

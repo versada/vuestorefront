@@ -72,6 +72,5 @@ schema = graphene.Schema(
         mailing_list.MailingContactList,
         mailing_list.MailingListList,
         website_page.WebsitePageList,
-        website_page.WebsitePageWithContent,
     ]
 )
