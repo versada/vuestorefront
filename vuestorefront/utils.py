@@ -1,4 +1,11 @@
+import requests
+import logging
+
 from odoo.http import request
+
+from . import const
+
+_logger = logging.getLogger(__name__)
 
 
 def get_offset(current_page, page_size):
@@ -27,3 +34,32 @@ def get_website(env):
     website = env['website'].get_current_website()
     request.website = website
     return website
+
+
+def format_vsf_cache_tags(pfx, ids):
+    ids_str = ",".join((str(id_)) for id_ in ids)
+    return f"{pfx}{ids_str}"
+
+
+# TODO: invalidate.cache should be redesigned to be generic enough to
+# handle cache invalidation for all kinds of models (merging this function with
+# that). Now it is implemented with only specific models in mind.
+def invalidate_vsf_cache(env, tags, raise_err=False):
+    ICP = env["ir.config_parameter"].sudo()
+    # If this function is called, we assume parameters are set.
+    url = ICP.get_param(const.CFG_PARAM_VSF_CACHE_URL)
+    key = ICP.get_param(const.CFG_PARAM_VSF_CACHE_KEY)
+    try:
+        res = requests.get(
+            url, params={'key': key, 'tags': tags}, timeout=const.VSF_VACHE_TIMEOUT
+        )
+        if not res.ok:
+            _logger.warning("Cache invalidation failed. Error: %s", res.text)
+            return False
+    except Exception as e:
+        if raise_err:
+            raise
+        _logger.error(
+            "Something went wrong invalidating VSF cache. Error: %s", e
+        )
+    return True

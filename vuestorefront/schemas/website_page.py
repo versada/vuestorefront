@@ -6,20 +6,9 @@ from ..utils import get_website, get_offset
 from .objects import WebsitePage
 
 
-class WebsitePageI(graphene.Interface):
-    website_page = graphene.Field(lambda: WebsitePage)
-    content = graphene.String()
-
-
 class WebsitePagesI(graphene.Interface):
     website_pages = graphene.List(WebsitePage)
     total_count = graphene.Int(required=True)
-    contents = graphene.List(graphene.NonNull(graphene.String))
-
-
-class WebsitePageWithContent(graphene.ObjectType):
-    class Meta:
-        interfaces = (WebsitePageI,)
 
 
 class WebsitePageList(graphene.ObjectType):
@@ -28,7 +17,6 @@ class WebsitePageList(graphene.ObjectType):
 
 
 class WebsitePageContentInput(graphene.InputObjectType):
-    content_included = graphene.Boolean(default=False)
     excluded_tags = graphene.List(graphene.String)
 
 
@@ -40,36 +28,45 @@ class WebsitePageFilterInput(graphene.InputObjectType):
 
 class WebsitePageQuery(graphene.ObjectType):
     website_page = graphene.Field(
-        WebsitePageI,
+        WebsitePage,
         required=True,
-        id=graphene.Int(),
-        content_rendering=graphene.Argument(WebsitePageContentInput, default_value={})
+        id=graphene.Int(default_value=None),
+        name=graphene.Int(default_value=None),
+        url=graphene.Int(default_value=None),
+        content_options=graphene.Argument(WebsitePageContentInput, default_value={})
     )
     website_pages = graphene.Field(
         WebsitePagesI,
         filter=graphene.Argument(WebsitePageFilterInput, default_value={}),
         current_page=graphene.Int(default_value=1),
         page_size=graphene.Int(default_value=20),
-        content_rendering=graphene.Argument(WebsitePageContentInput, default_value={}),
+        content_options=graphene.Argument(WebsitePageContentInput, default_value={}),
     )
 
-    def resolve_website_page(self, info, id, content_rendering):
+    def resolve_website_page(
+        self, info, id=None, name=None, url=None, content_options=None
+    ):
+        if content_options is None:
+            content_options = {}
         env = info.context["env"]
-        page = env["website.page"].browse(id).sudo()
+        WebsitePage = env['website.page'].sudo()
+        domain_kwargs = {"name": name, "url": url}
+        if id:
+            domain_kwargs["ids"] = [id]
+        domain = WebsitePage.prepare_vsf_domain(**domain_kwargs)
+        # TODO: we should not simply limit to 1 as its not correct. We
+        # should raise exception if more than one record is found (though
+        # limit=1 logic is now used all over the module, so keeping it
+        # for consistency..)
+        page = WebsitePage.search(domain, limit=1)
         website = get_website(env)
         if page.website_id and page.website_id != website:
             raise GraphQLError("Website page does not exist!")
-        content = ''
-        if content_rendering.get('content_included'):
-            content = page.render_vsf_page(**content_rendering)
-        return WebsitePageWithContent(
-            website_page=page,
-            content=content
-        )
+        return page.with_context(website_page_content_options=content_options)
 
     @staticmethod
     def resolve_website_pages(
-        self, info, filter, current_page, page_size, content_rendering
+        self, info, filter, current_page, page_size, content_options
     ):
         env = info.context["env"]
         WebsitePage = env['website.page'].sudo()
@@ -77,12 +74,9 @@ class WebsitePageQuery(graphene.ObjectType):
         offset = get_offset(current_page, page_size)
         website_pages = WebsitePage.search(domain, offset=offset, limit=page_size)
         total_count = WebsitePage.search_count(domain)
-        if content_rendering.get('content_included'):
-            contents = [p.render_vsf_page(**content_rendering) for p in website_pages]
-        else:
-            contents = [''] * len(website_pages)
         return WebsitePageList(
-            website_pages=website_pages,
+            website_pages=website_pages.with_context(
+                website_page_content_options=content_options
+            ),
             total_count=total_count,
-            contents=contents
         )

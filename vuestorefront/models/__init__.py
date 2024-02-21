@@ -3,6 +3,7 @@
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl).
 from . import (
     invalidate_cache,
+    ir_ui_view,
     website,
     res_partner,
     product_public_category,

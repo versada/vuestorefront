@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="website_pages_form_view_inherit" model="ir.ui.view">
+        <field name="name">website.page.form.vsf.cache</field>
+        <field name="model">website.page</field>
+        <field name="inherit_id" ref="website.website_pages_form_view"/>
+        <field name="arch" type="xml">
+            <field name="view_id" position="before">
+                <!-- To move button next to view_id value -->
+                <label
+                    for="view_id"
+                    string=""
+                    class="oe_inline"
+                />
+                <div
+                    class="o_row o_row_readonly"
+                    name="div_website_page_csv_cache_invalidation"
+                >
+                    <button
+                        name="action_invalidate_vsf_cache"
+                        string="Invalidate VSF Cache"
+                        type="object"
+                    />
+                </div>
+            </field>
+        </field>
+    </record>
+</odoo>
