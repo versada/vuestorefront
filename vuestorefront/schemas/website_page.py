@@ -31,8 +31,8 @@ class WebsitePageQuery(graphene.ObjectType):
         WebsitePage,
         required=True,
         id=graphene.Int(default_value=None),
-        name=graphene.Int(default_value=None),
-        url=graphene.Int(default_value=None),
+        name=graphene.String(default_value=None),
+        url=graphene.String(default_value=None),
         content_options=graphene.Argument(WebsitePageContentInput, default_value={})
     )
     website_pages = graphene.Field(
