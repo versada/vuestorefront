@@ -199,6 +199,25 @@ class ProductTemplate(models.Model):
         return expression.AND(domains)
 
     @api.model
+    def prepare_vsf_search_order(self, sort):
+        sorting = ''
+        for field, val in sort.items():
+            if sorting:
+                sorting += ', '
+            if field == 'price':
+                sorting += 'list_price %s' % val.value
+            else:
+                sorting += '%s %s' % (field, val.value)
+
+        # Add id as last factor so we can consistently get the same results
+        if sorting:
+            sorting += ', id ASC'
+        else:
+            sorting = 'id ASC'
+
+        return sorting
+
+    @api.model
     def is_vsf_published_only(self, **kwargs):
         """Check if product search is for published products only."""
         return True

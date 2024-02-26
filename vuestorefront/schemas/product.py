@@ -13,30 +13,11 @@ from odoo.addons.vuestorefront.schemas.objects import (
 from ..utils import get_offset
 
 
-def get_search_order(sort):
-    sorting = ''
-    for field, val in sort.items():
-        if sorting:
-            sorting += ', '
-        if field == 'price':
-            sorting += 'list_price %s' % val.value
-        else:
-            sorting += '%s %s' % (field, val.value)
-
-    # Add id as last factor so we can consistently get the same results
-    if sorting:
-        sorting += ', id ASC'
-    else:
-        sorting = 'id ASC'
-
-    return sorting
-
-
 def get_product_list(env, current_page, page_size, search, sort, **kwargs):
     Product = env['product.template'].sudo()
     domain = Product.prepare_vsf_domain(search, **kwargs)
     offset = get_offset(current_page, page_size)
-    order = get_search_order(sort)
+    order = Product.prepare_vsf_search_order(sort)
     products = Product.search(domain, order=order, offset=offset, limit=page_size)
     # Total count from the whole query is needed for creating proper pagination for it
     total_count = Product.search_count(domain)
