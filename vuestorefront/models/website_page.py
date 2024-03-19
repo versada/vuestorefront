@@ -1,6 +1,7 @@
 import lxml
 import requests
 from urllib.parse import urljoin
+from graphql import GraphQLError
 
 from odoo import models, api
 
@@ -32,12 +33,22 @@ class WebsitePage(models.Model):
         # NOTE. Even if page has no website set, we assume current
         # website all the time for now.
         base_url = website.get_base_url()
-        endpoint = urljoin(base_url, self.url)
+        endpoint = urljoin(base_url, self.get_vsf_url(**kw))
         # TODO: make it possible to render page without its layout
         # directly, so we would not need to strip rendered content
         # afterwards.
         res = requests.get(endpoint)
         return self._postprocess_vsf_page_rendering(res.text, **kw)
+
+    def get_vsf_url(self, **kw):
+        self.ensure_one()
+        lang = kw.get('lang')
+        if lang:
+            # First check if such lang exists and is active.
+            if not self.env['res.lang'].search([('code', '=', lang)], limit=1):
+                raise GraphQLError(f"No active language found with code {lang}.")
+            return f"/{lang}{self.url}"
+        return self.url
 
     def _postprocess_vsf_page_rendering(self, content, **kw):
         self.ensure_one()

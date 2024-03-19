@@ -62,7 +62,9 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
         cls.WebsiteSeoMetadata._patch_method('get_website_meta', lambda s: {})
 
     @patch(PATH_UTILS_REQ)
-    def test_01_query_website_page_exclude_some_content_tags(self, *mock_requests):
+    def test_01_query_website_page_w_lang_exclude_some_content_tags(
+        self, *mock_requests
+    ):
         # GIVEN
         self.url_open(f"/web?db={get_db_name()}", timeout=20)
         update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
@@ -85,7 +87,10 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
             variables={
                 "id": self.website_page_contactus.id,
                 "contentOptions": {
-                    "excludedTags": ["header", "footer"]
+                    "excludedTags": ["header", "footer"],
+                    # Forcing default lang, to not need to activate
+                    # other lang.
+                    "lang": "en_US",
                 },
             },
         )
@@ -95,7 +100,7 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
             res["websitePage"],
             {
                 "name": "Contact Us",
-                "url": "/contactus",
+                "url": "/en_US/contactus",
             }
         )
         self.assertIn('</html>', content)
@@ -103,7 +108,41 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
         self.assertNotIn('</footer>', content)
 
     @patch(PATH_UTILS_REQ)
-    def test_02_query_website_pages_exclude_some_content_tags(self, *mock_requests):
+    def test_02_query_website_page_wrong_lang(self, *mock_requests):
+        # GIVEN
+        self.url_open(f"/web?db={get_db_name()}", timeout=20)
+        update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
+        # WHEN, THEN
+        with self.assertRaisesRegex(
+            RuntimeError,
+            r"No active language found with code not_Existing"
+        ):
+            self.execute(
+                """
+                query getWebsitePage(
+                    $id: Int, $contentOptions: WebsitePageContentInput)
+                {
+                    websitePage(
+                        id: $id,
+                        contentOptions: $contentOptions
+                    ) {
+                        name
+                        url
+                        content
+                    }
+                }
+                """,
+                variables={
+                    "id": self.website_page_contactus.id,
+                    "contentOptions": {
+                        "excludedTags": ["header", "footer"],
+                        "lang": "not_Existing",
+                    },
+                },
+            )
+
+    @patch(PATH_UTILS_REQ)
+    def test_03_query_website_pages_exclude_some_content_tags(self, *mock_requests):
         # GIVEN
         update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
         # WHEN
@@ -149,7 +188,7 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
         self.assertNotIn('</footer>', content)
 
     @patch(PATH_UTILS_REQ)
-    def test_03_query_website_pages_no_content_options(self, *mock_requests):
+    def test_04_query_website_pages_no_content_options(self, *mock_requests):
         # GIVEN
         update_mocked_requests(self, self.website_page_contactus.url, *mock_requests)
         # WHEN

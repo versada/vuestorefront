@@ -18,6 +18,7 @@ class WebsitePageList(graphene.ObjectType):
 
 class WebsitePageContentInput(graphene.InputObjectType):
     excluded_tags = graphene.List(graphene.String)
+    lang = graphene.String(description="Language Locale Code (e.g. en_US, nl_BE)")
 
 
 class WebsitePageFilterInput(graphene.InputObjectType):
