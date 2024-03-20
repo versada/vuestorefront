@@ -40,7 +40,10 @@ class TestWebsitePageViewCache(common.TestVuestorefrontCommon):
     @requests_mock.Mocker()
     def test_03_website_page_view_cache_invalidation_disabled(self, m):
         # GIVEN
-        self.IrConfigParameter.set_param(const.CFG_PARAM_VSF_CACHE_ENABLE, False)
+        # NOTE. Normally to disable it, we would need to disable
+        # CFG_PARAM_VSF_CACHE_ENABLE option, but for now we want to use
+        # website page cache separately from the rest of the caching..
+        self.IrConfigParameter.set_param(const.CFG_PARAM_VSF_CACHE_URL, False)
         adapter = m.get(VSF_CACHE_URL, status_code=200, text="OK")
         # WHEN
         self.website_page_contactus.view_id.priority = 17

@@ -773,6 +773,7 @@ class WebsitePage(OdooObjectType):
     name = graphene.String()
     url = graphene.String()
     content = graphene.String()
+    content_cache_tag = graphene.String()
 
     def resolve_url(self, info):
         options = self.env.context.get("website_page_content_options", {})
@@ -781,3 +782,6 @@ class WebsitePage(OdooObjectType):
     def resolve_content(self, info):
         options = self.env.context.get("website_page_content_options", {})
         return self.render_vsf_page(**options)
+
+    def resolve_content_cache_tag(self, info):
+        return self.view_id.get_vsf_cache_tags()

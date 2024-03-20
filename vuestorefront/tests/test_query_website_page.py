@@ -81,6 +81,7 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
                     name
                     url
                     content
+                    contentCacheTag
                 }
             }
             """,
@@ -101,6 +102,7 @@ class TestQueryWebsitePage(common.TestVuestorefrontCommon, HttpCaseCommon):
             {
                 "name": "Contact Us",
                 "url": "/en_US/contactus",
+                "contentCacheTag": f"iuv{self.website_page_contactus.view_id.id}"
             }
         )
         self.assertIn('</html>', content)
