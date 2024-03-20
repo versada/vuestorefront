@@ -5,6 +5,8 @@
 import requests
 from odoo import models, fields, api
 
+from .. import const
+
 
 class Website(models.Model):
     _inherit = 'website'
@@ -49,8 +51,10 @@ class WebsiteRewrite(models.Model):
 
     def _vsf_request_cache_invalidation(self):
         ICP = self.env['ir.config_parameter'].sudo()
-        url = ICP.get_param('vsf_cache_invalidation_url', False)
-        key = ICP.get_param('vsf_cache_invalidation_key', False)
+        if not ICP.get_param(const.CFG_PARAM_VSF_CACHE_ENABLE):
+            return
+        url = ICP.get_param(const.CFG_PARAM_VSF_CACHE_URL)
+        key = ICP.get_param(const.CFG_PARAM_VSF_CACHE_KEY)
 
         if url and key:
             try:

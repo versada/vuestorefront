@@ -7,6 +7,8 @@ from datetime import datetime
 import requests
 from odoo import models, fields, api
 
+from .. import const
+
 _logger = logging.getLogger(__name__)
 
 
@@ -84,8 +86,10 @@ class InvalidateCache(models.Model):
     @api.model
     def request_vsf_cache_invalidation(self):
         ICP = self.env['ir.config_parameter'].sudo()
-        url = ICP.get_param('vsf_cache_invalidation_url', False)
-        key = ICP.get_param('vsf_cache_invalidation_key', False)
+        if not ICP.get_param(const.CFG_PARAM_VSF_CACHE_ENABLE):
+            return
+        url = ICP.get_param(const.CFG_PARAM_VSF_CACHE_URL)
+        key = ICP.get_param(const.CFG_PARAM_VSF_CACHE_KEY)
 
         models = [
             {

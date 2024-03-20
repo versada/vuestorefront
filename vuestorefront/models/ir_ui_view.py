@@ -3,10 +3,7 @@ from odoo import models
 from ..utils import format_vsf_cache_tags, invalidate_vsf_cache
 from .. import const
 
-
-# Should we use lower case? Because sending this to VSF cache using
-# params will make it lowercase anyway..
-TAG_PFX = "IUV"
+TAG_PFX = "iuv"
 
 
 class IrUiView(models.Model):
@@ -25,8 +22,14 @@ class IrUiView(models.Model):
         return super().unlink()
 
     def invalidate_website_page_views_cache(self):
-        if not self.env['ir.config_parameter'].get_param(
-            const.CFG_PARAM_VSF_CACHE_ENABLE
+        ICP = self.env['ir.config_parameter'].sudo()
+        # TODO: for now we are checking URL/KEY instead of
+        # CFG_PARAM_VSF_CACHE_ENABLE here, so we could use website page
+        # cache when the rest of caching is disabled. Normally all
+        # caching should be enabled.
+        if (
+            not ICP.get_param(const.CFG_PARAM_VSF_CACHE_URL)
+            or not ICP.get_param(const.CFG_PARAM_VSF_CACHE_KEY)
         ):
             return False
         views = self._get_website_page_views()
