@@ -8,4 +8,6 @@ from . import (
     test_query_mutate_payment,
     test_mutate_user,
     test_query_website_page,
+    test_query_order,
+    test_query_invoice,
 )

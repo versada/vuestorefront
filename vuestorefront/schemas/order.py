@@ -33,8 +33,15 @@ def get_search_order(sort):
 
 
 class OrderFilterInput(graphene.InputObjectType):
+    ids = graphene.List(graphene.Int)
+    name = graphene.String()
+    partner_name = graphene.String()
     stages = graphene.List(OrderStage)
+    # Assuming YYYY-MM-DD format.
+    date_from = graphene.String()
+    date_to = graphene.String()
     invoice_status = graphene.List(InvoiceStatus)
+    line_name = graphene.String()
 
 
 class OrderSortInput(graphene.InputObjectType):
@@ -80,7 +87,8 @@ class OrderQuery(graphene.ObjectType):
     def resolve_order(self, info, id, access_token):
         SaleOrder = info.context['env']['sale.order']
         error_msg = 'Sale Order does not exist.'
-        # This Condition will be used just on the Payment of one specific Order (Public Access)
+        # This Condition will be used just on the Payment of one specific Order (
+        # Public Access)
         if access_token:
             order = SaleOrder.sudo().search([('id', '=', id)], limit=1)
             if not order:
@@ -88,7 +96,9 @@ class OrderQuery(graphene.ObjectType):
             if access_token != order.access_token:
                 raise GraphQLError(_("Sorry! You cannot access this Order."))
         else:
-            order = get_document_with_check_access(SaleOrder, [('id', '=', id)], error_msg=error_msg)
+            order = get_document_with_check_access(
+                SaleOrder, [('id', '=', id)], error_msg=error_msg
+            )
             if not order:
                 raise GraphQLError(_(error_msg))
         return order.sudo()
@@ -96,27 +106,13 @@ class OrderQuery(graphene.ObjectType):
     @staticmethod
     def resolve_orders(self, info, filter, current_page, page_size, sort):
         env = info.context["env"]
-        user = request.env.user
-        partner = user.partner_id
+        partner = env.user.partner_id
         sort_order = get_search_order(sort)
-        domain = [
-            ('message_partner_ids', 'child_of', [partner.commercial_partner_id.id]),
-        ]
-
-        # Filter by stages or default to sales and done
-        if filter.get('stages', False):
-            stages = [stage.value for stage in filter['stages']]
-            domain += [('state', 'in', stages)]
-        else:
-            domain += [('state', 'in', ['sale', 'done'])]
-
-        # Filter by invoice status
-        if filter.get('invoice_status', False):
-            invoice_status = [invoice_status.value for invoice_status in filter['invoice_status']]
-            domain += [('invoice_status', 'in', invoice_status)]
-
         offset = get_offset(current_page, page_size)
         SaleOrder = env["sale.order"]
+        domain = SaleOrder.prepare_vsf_domain(
+            partner.commercial_partner_id.id, **filter
+        )
         orders = get_document_with_check_access(
             SaleOrder,
             domain,

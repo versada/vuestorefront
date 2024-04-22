@@ -1,7 +1,9 @@
+from datetime import datetime
 import requests
 import logging
 
 from odoo.http import request
+from odoo.tools.misc import DEFAULT_SERVER_DATE_FORMAT
 
 from . import const
 
@@ -39,6 +41,11 @@ def get_website(env):
 def format_vsf_cache_tags(pfx, ids):
     ids_str = ",".join((str(id_)) for id_ in ids)
     return f"{pfx}{ids_str}"
+
+
+def date_string_to_datetime(dt_str, hour=0, minute=0, second=0):
+    dt = datetime.strptime(dt_str, DEFAULT_SERVER_DATE_FORMAT)
+    return dt.replace(hour=hour, minute=minute, second=second)
 
 
 # TODO: invalidate.cache should be redesigned to be generic enough to

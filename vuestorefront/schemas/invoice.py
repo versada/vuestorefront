@@ -4,11 +4,13 @@
 
 import graphene
 from graphql import GraphQLError
-from odoo.http import request
 from odoo import _
 
 from odoo.addons.vuestorefront.schemas.objects import (
-    SortEnum, Invoice,
+    SortEnum,
+    Invoice,
+    InvoiceState,
+    InvoicePaymentState,
     get_document_with_check_access,
     get_document_count_with_check_access
 )
@@ -30,6 +32,17 @@ def get_search_order(sort):
         sorting = 'id ASC'
 
     return sorting
+
+
+class InvoiceFilterInput(graphene.InputObjectType):
+    ids = graphene.List(graphene.Int)
+    name = graphene.String()
+    states = graphene.List(InvoiceState)
+    # Assuming YYYY-MM-DD format.
+    date_from = graphene.String()
+    date_to = graphene.String()
+    payment_states = graphene.List(InvoicePaymentState)
+    line_name = graphene.String()
 
 
 class InvoiceSortInput(graphene.InputObjectType):
@@ -57,6 +70,7 @@ class InvoiceQuery(graphene.ObjectType):
     )
     invoices = graphene.Field(
         Invoices,
+        filter=graphene.Argument(InvoiceFilterInput, default_value={}),
         current_page=graphene.Int(default_value=1),
         page_size=graphene.Int(default_value=10),
         sort=graphene.Argument(InvoiceSortInput, default_value={})
@@ -66,22 +80,24 @@ class InvoiceQuery(graphene.ObjectType):
     def resolve_invoice(self, info, id):
         AccountMove = info.context["env"]['account.move']
         error_msg = 'Invoice does not exist.'
-        invoice = get_document_with_check_access(AccountMove, [('id', '=', id)], error_msg=error_msg)
+        invoice = get_document_with_check_access(
+            AccountMove, [('id', '=', id)], error_msg=error_msg
+        )
         if not invoice:
             raise GraphQLError(_(error_msg))
         return invoice.sudo()
 
     @staticmethod
-    def resolve_invoices(self, info, current_page, page_size, sort):
+    def resolve_invoices(self, info, filter, current_page, page_size, sort):
         env = info.context["env"]
-        user = request.env.user
-        partner = user.partner_id
-        sort_order = get_search_order(sort)
-        domain = [
-            ('message_partner_ids', 'child_of', [partner.commercial_partner_id.id])
-        ]
-        offset = get_offset(current_page, page_size)
         AccountMove = env["account.move"]
+        partner = env.user.partner_id
+        sort_order = get_search_order(sort)
+        domain = AccountMove.prepare_vsf_domain(
+            partner.commercial_partner_id.id,
+            **filter,
+        )
+        offset = get_offset(current_page, page_size)
         invoices = get_document_with_check_access(
             AccountMove,
             domain,
