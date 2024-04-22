@@ -14,4 +14,5 @@ from . import (
     sale_order,
     payment_transaction,
     website_page,
+    account_move,
 )

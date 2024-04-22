@@ -27,6 +27,15 @@ InvoiceStatus = graphene.Enum('InvoiceStatus', [('UpsellingOpportunity', 'upsell
                                                 ('ToInvoice', 'to invoice'), ('NothingtoInvoice', 'no')])
 
 InvoiceState = graphene.Enum('InvoiceState', [('Draft', 'draft'), ('Posted', 'posted'), ('Cancelled', 'cancel')])
+InvoicePaymentState = graphene.Enum(
+    'InvoicePaymentState',
+    [
+        ('NotPaid', 'not_paid'),
+        ('Paid', 'paid'),
+        ('PartiallyPaid', 'partial'),
+        ('Reversed', 'reversed'),
+    ]
+)
 
 InventoryAvailability = graphene.Enum('InventoryAvailability', [
     ('SellRegardlessOfInventory', 'never'), ('ShowInventoryOnWebsiteAndPreventSalesIfNotEnoughStock', 'always'),
@@ -47,6 +56,7 @@ class SortEnum(graphene.Enum):
 # --------------------- #
 #      Functions        #
 # --------------------- #
+
 
 def get_document_with_check_access(model, domain, order=None, limit=20, offset=0,
                                    error_msg='This document does not exist.'):
@@ -632,8 +642,11 @@ class InvoiceLine(OdooObjectType):
 class Invoice(OdooObjectType):
     id = graphene.Int(required=True)
     name = graphene.String()
+    invoice_origin = graphene.String()
+    ref = graphene.String()
     partner = graphene.Field(lambda: Partner)
     partner_shipping = graphene.Field(lambda: Partner)
+    order = graphene.Field(lambda: Order)
     invoice_date = graphene.String()
     invoice_date_due = graphene.String()
     amount_untaxed = graphene.Float()
@@ -643,6 +656,7 @@ class Invoice(OdooObjectType):
     currency = graphene.Field(lambda: Currency)
     invoice_lines = graphene.List(graphene.NonNull(lambda: InvoiceLine))
     state = InvoiceState()
+    payment_state = InvoicePaymentState()
     invoice_url = graphene.String()
     transactions = graphene.List(graphene.NonNull(lambda: PaymentTransaction))
 
@@ -651,6 +665,10 @@ class Invoice(OdooObjectType):
 
     def resolve_partner_shipping(self, info):
         return self.partner_shipping_id or None
+
+    def resolve_order(self, info):
+        # Assuming single order is related.
+        return self.invoice_line_ids[:1].sale_line_ids[:1].order_id
 
     def resolve_invoice_date(self, info):
         return self.invoice_date or None
@@ -666,6 +684,9 @@ class Invoice(OdooObjectType):
 
     def resolve_state(self, info):
         return self.state or None
+
+    def resolve_payment_state(self, info):
+        return self.convert_payment_state_to_vsf()
 
     def resolve_invoice_url(self, info):
         return self.get_portal_url()
