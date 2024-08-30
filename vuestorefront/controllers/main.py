@@ -54,19 +54,19 @@ class VSFBinary(Binary):
     def content_image(
         self,
         xmlid=None,
-        model="ir.attachment",
+        model='ir.attachment',
         id=None,
-        field="datas",
-        filename_field="name",
-        unique=None,
+        field='raw',
+        filename_field='name',
         filename=None,
         mimetype=None,
-        download=None,
+        unique=False,
+        download=False,
         width=0,
         height=0,
         crop=False,
         access_token=None,
-        **kwargs,
+        nocache=False
     ):
         """Validate width and height."""
         try:
@@ -84,15 +84,15 @@ class VSFBinary(Binary):
             id=id,
             field=field,
             filename_field=filename_field,
-            unique=unique,
             filename=filename,
+            unique=unique,
             mimetype=mimetype,
             download=download,
             width=width,
             height=height,
             crop=crop,
             access_token=access_token,
-            **kwargs,
+            nocache=nocache
         )
 
 
