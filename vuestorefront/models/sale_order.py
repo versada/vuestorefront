@@ -1,4 +1,7 @@
+from datetime import date
+
 from odoo import models, api
+from odoo.osv import expression
 
 from ..utils import date_string_to_datetime
 
@@ -38,6 +41,10 @@ class SaleOrder(models.Model):
             domain.append(self._get_vsf_date_to_leaf(kw["date_to"]))
         if kw.get("line_name"):
             domain.append(("order_line.name", "ilike", kw["line_name"]))
+        if kw.get("is_expired") is not None:
+            domain = expression.AND(
+                [domain, self._get_vsf_is_expired_domain(kw["is_expired"])]
+            )
         return domain
 
     def _get_vsf_date_from_leaf(self, date_from):
@@ -47,3 +54,9 @@ class SaleOrder(models.Model):
     def _get_vsf_date_to_leaf(self, date_to):
         dt = date_string_to_datetime(date_to, hour=23, minute=59, second=59)
         return ("date_order", "<=", dt)
+
+    def _get_vsf_is_expired_domain(self, is_expired):
+        today = date.today()
+        if is_expired:
+            return [("validity_date", "!=", False), ("validity_date", "<", today)]
+        return ["|", ("validity_date", "=", False), ("validity_date", ">=", today)]

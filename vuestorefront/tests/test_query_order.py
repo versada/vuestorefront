@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from odoo.tools.misc import DEFAULT_SERVER_DATE_FORMAT
 
@@ -17,6 +17,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         cls.sale_1.order_line[0].name = 'my-line-name-1'
 
     def test_01_query_order(self):
+        self.sale_1.validity_date = date(2022, 2, 19)
         # WHEN
         with self.with_user("portal"):
             res = self.execute(
@@ -24,6 +25,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
                 query getOrder($id: Int) {
                     order (id: $id) {
                         name
+                        validityDate
                     }
                 }
                 """,
@@ -34,6 +36,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
             res["order"],
             {
                 "name": self.sale_1.name,
+                "validityDate": "2022-02-19",
             },
         )
 
@@ -185,3 +188,93 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
             )
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
+
+    def test_10_query_orders_by_is_expired_match(self):
+        # GIVEN
+        self.sale_1.validity_date = date.today() - timedelta(days=10)
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getOrders($ids: [Int], $isExpired: Boolean) {
+                    orders(filter: {ids: $ids, isExpired: $isExpired}) {
+                        orders { name }
+                    }
+                }
+                """,
+                variables={"ids": self.sale_1.ids, "isExpired": True},
+            )
+        # THEN
+        self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
+
+    def test_11_query_orders_by_is_expired_not_match(self):
+        # GIVEN
+        self.sale_1.validity_date = date.today() + timedelta(days=10)
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getOrders($ids: [Int], $isExpired: Boolean) {
+                    orders(filter: {ids: $ids, isExpired: $isExpired}) {
+                        orders { name }
+                    }
+                }
+                """,
+                variables={"ids": self.sale_1.ids, "isExpired": True},
+            )
+        # THEN
+        self.assertEqual(res["orders"]["orders"], [])
+
+    def test_12_query_orders_by_is_not_expired_match(self):
+        # GIVEN
+        self.sale_1.validity_date = date.today() + timedelta(days=10)
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getOrders($ids: [Int], $isExpired: Boolean) {
+                    orders(filter: {ids: $ids, isExpired: $isExpired}) {
+                        orders { name }
+                    }
+                }
+                """,
+                variables={"ids": self.sale_1.ids, "isExpired": False},
+            )
+        # THEN
+        self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
+
+    def test_13_query_orders_by_is_not_expired_no_date_match(self):
+        # GIVEN
+        self.sale_1.validity_date = False
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getOrders($ids: [Int], $isExpired: Boolean) {
+                    orders(filter: {ids: $ids, isExpired: $isExpired}) {
+                        orders { name }
+                    }
+                }
+                """,
+                variables={"ids": self.sale_1.ids, "isExpired": False},
+            )
+        # THEN
+        self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
+
+    def test_14_query_orders_by_is_not_expired_not_match(self):
+        # GIVEN
+        self.sale_1.validity_date = date.today() - timedelta(days=10)
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getOrders($ids: [Int], $isExpired: Boolean) {
+                    orders(filter: {ids: $ids, isExpired: $isExpired}) {
+                        orders { name }
+                    }
+                }
+                """,
+                variables={"ids": self.sale_1.ids, "isExpired": False},
+            )
+        # THEN
+        self.assertEqual(res["orders"]["orders"], [])

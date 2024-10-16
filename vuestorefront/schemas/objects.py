@@ -565,6 +565,7 @@ class Order(OdooObjectType):
     partner_shipping = graphene.Field(lambda: Partner)
     partner_invoice = graphene.Field(lambda: Partner)
     date_order = graphene.String()
+    validity_date = graphene.String()
     amount_untaxed = graphene.Float()
     amount_tax = graphene.Float()
     amount_total = graphene.Float()
