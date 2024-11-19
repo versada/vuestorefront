@@ -1,5 +1,7 @@
 from odoo import models, api
 
+from ..utils import combine_and_with_or_domains
+
 
 class AccountMove(models.Model):
     _inherit = "account.move"
@@ -9,8 +11,6 @@ class AccountMove(models.Model):
         domain = [("message_partner_ids", "child_of", [commercial_partner_id])]
         if kw.get("ids"):
             domain.append(("id", "in", kw["ids"]))
-        if kw.get("name"):
-            domain.append(("name", "ilike", kw["name"]))
         if kw.get("states"):
             domain.append(("state", "in", [state.value for state in kw["states"]]))
         if kw.get("payment_states"):
@@ -19,9 +19,7 @@ class AccountMove(models.Model):
             domain.append(self._get_vsf_date_from_leaf(kw["date_from"]))
         if kw.get("date_to"):
             domain.append(self._get_vsf_date_to_leaf(kw["date_to"]))
-        if kw.get("line_name"):
-            domain.append(("invoice_line_ids.name", "ilike", kw["line_name"]))
-        return domain
+        return combine_and_with_or_domains(domain, self._prepare_vsf_name_domains(kw))
 
     def convert_payment_state_to_vsf(self):
         self.ensure_one()
@@ -44,3 +42,12 @@ class AccountMove(models.Model):
 
     def _get_vsf_date_to_leaf(self, date_to):
         return ("invoice_date", "<=", date_to)
+
+    @api.model
+    def _prepare_vsf_name_domains(self, kw):
+        domains = []
+        if kw.get("name"):
+            domains.append([("name", "ilike", kw["name"])])
+        if kw.get("line_name"):
+            domains.append([("invoice_line_ids.name", "ilike", kw["line_name"])])
+        return domains

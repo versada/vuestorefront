@@ -2,12 +2,20 @@ from datetime import datetime
 import requests
 import logging
 
+from odoo.osv import expression
 from odoo.http import request
 from odoo.tools.misc import DEFAULT_SERVER_DATE_FORMAT
 
 from . import const
 
 _logger = logging.getLogger(__name__)
+
+
+def combine_and_with_or_domains(and_domain, or_domains):
+    if not or_domains:
+        return and_domain
+    or_domain = expression.OR(or_domains)
+    return expression.AND([and_domain, or_domain])
 
 
 def get_offset(current_page, page_size):

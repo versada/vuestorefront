@@ -118,7 +118,61 @@ class TestQueryInvoice(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["invoices"]["invoices"], [{"name": self.invoice_1.name}])
 
-    def test_06_query_invoices_by_states(self):
+    def test_06_query_invoices_by_name_or_line_name_match_name(self):
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getInvoices($ids: [Int], $name: String, $lineName: String) {
+                    invoices(filter: {ids: $ids, name: $name, lineName: $lineName}) {
+                        invoices {
+                            name
+                        }
+                    }
+                }
+                """,
+                variables={"name": self.invoice_1.name, "lineName": 'wrong-line-name'},
+            )
+        # THEN
+        self.assertEqual(res["invoices"]["invoices"], [{"name": self.invoice_1.name}])
+
+    def test_07_query_invoices_by_name_or_line_name_match_line_name(self):
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getInvoices($ids: [Int], $name: String, $lineName: String) {
+                    invoices(filter: {ids: $ids, name: $name, lineName: $lineName}) {
+                        invoices {
+                            name
+                        }
+                    }
+                }
+                """,
+                variables={"name": "wrong-name", "lineName": 'my-line-name-1'},
+            )
+        # THEN
+        self.assertEqual(res["invoices"]["invoices"], [{"name": self.invoice_1.name}])
+
+    def test_08_query_invoices_by_name_or_line_name_no_match(self):
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getInvoices($ids: [Int], $name: String, $lineName: String) {
+                    invoices(filter: {ids: $ids, name: $name, lineName: $lineName}) {
+                        invoices {
+                            name
+                        }
+                    }
+                }
+                """,
+                variables={"name": "wrong-name", "lineName": 'wrong-line-name'},
+            )
+        # THEN
+        self.assertEqual(res["invoices"]["invoices"], [])
+
+    def test_09_query_invoices_by_states(self):
         # WHEN
         with self.with_user("portal"):
             res = self.execute(
@@ -136,7 +190,7 @@ class TestQueryInvoice(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["invoices"]["invoices"], [{"name": self.invoice_1.name}])
 
-    def test_07_query_invoices_by_payment_state(self):
+    def test_10_query_invoices_by_payment_state(self):
         # WHEN
         with self.with_user("portal"):
             res = self.execute(
@@ -154,7 +208,7 @@ class TestQueryInvoice(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["invoices"]["invoices"], [{"name": self.invoice_1.name}])
 
-    def test_08_query_invoices_by_date_from(self):
+    def test_11_query_invoices_by_date_from(self):
         # GIVEN
         dt = self.invoice_1.invoice_date - timedelta(days=10)
         date_from = dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
@@ -173,7 +227,7 @@ class TestQueryInvoice(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["invoices"]["invoices"], [{"name": self.invoice_1.name}])
 
-    def test_09_query_invoices_by_date_to(self):
+    def test_12_query_invoices_by_date_to(self):
         # GIVEN
         dt = self.invoice_1.invoice_date + timedelta(days=10)
         date_to = dt.strftime(DEFAULT_SERVER_DATE_FORMAT)

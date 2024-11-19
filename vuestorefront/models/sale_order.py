@@ -3,7 +3,7 @@ from datetime import date
 from odoo import models, api
 from odoo.osv import expression
 
-from ..utils import date_string_to_datetime
+from ..utils import date_string_to_datetime, combine_and_with_or_domains
 
 
 class SaleOrder(models.Model):
@@ -31,21 +31,17 @@ class SaleOrder(models.Model):
                 invoice_status.value for invoice_status in kw['invoice_status']
             ]
             domain.append(('invoice_status', 'in', invoice_status))
-        if kw.get("name"):
-            domain.append(("name", "ilike", kw["name"]))
         if kw.get("partner_name"):
             domain.append(("partner_id.name", "ilike", kw["partner_name"]))
         if kw.get("date_from"):
             domain.append(self._get_vsf_date_from_leaf(kw["date_from"]))
         if kw.get("date_to"):
             domain.append(self._get_vsf_date_to_leaf(kw["date_to"]))
-        if kw.get("line_name"):
-            domain.append(("order_line.name", "ilike", kw["line_name"]))
         if kw.get("is_expired") is not None:
             domain = expression.AND(
                 [domain, self._get_vsf_is_expired_domain(kw["is_expired"])]
             )
-        return domain
+        return combine_and_with_or_domains(domain, self._prepare_vsf_name_domains(kw))
 
     def _get_vsf_date_from_leaf(self, date_from):
         dt = date_string_to_datetime(date_from)
@@ -60,3 +56,12 @@ class SaleOrder(models.Model):
         if is_expired:
             return [("validity_date", "!=", False), ("validity_date", "<", today)]
         return ["|", ("validity_date", "=", False), ("validity_date", ">=", today)]
+
+    @api.model
+    def _prepare_vsf_name_domains(self, kw):
+        domains = []
+        if kw.get("name"):
+            domains.append([("name", "ilike", kw["name"])])
+        if kw.get("line_name"):
+            domains.append([("order_line.name", "ilike", kw["line_name"])])
+        return domains
