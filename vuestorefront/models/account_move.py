@@ -19,7 +19,9 @@ class AccountMove(models.Model):
             domain.append(self._get_vsf_date_from_leaf(kw["date_from"]))
         if kw.get("date_to"):
             domain.append(self._get_vsf_date_to_leaf(kw["date_to"]))
-        return combine_and_with_or_domains(domain, self._prepare_vsf_name_domains(kw))
+        return combine_and_with_or_domains(
+            domain, self._prepare_vsf_name_like_domains(kw)
+        )
 
     def convert_payment_state_to_vsf(self):
         self.ensure_one()
@@ -44,10 +46,12 @@ class AccountMove(models.Model):
         return ("invoice_date", "<=", date_to)
 
     @api.model
-    def _prepare_vsf_name_domains(self, kw):
+    def _prepare_vsf_name_like_domains(self, kw):
         domains = []
         if kw.get("name"):
             domains.append([("name", "ilike", kw["name"])])
         if kw.get("line_name"):
             domains.append([("invoice_line_ids.name", "ilike", kw["line_name"])])
+        if kw.get("ref"):
+            domains.append([("ref", "ilike", kw["ref"])])
         return domains

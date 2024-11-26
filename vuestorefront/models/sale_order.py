@@ -41,7 +41,9 @@ class SaleOrder(models.Model):
             domain = expression.AND(
                 [domain, self._get_vsf_is_expired_domain(kw["is_expired"])]
             )
-        return combine_and_with_or_domains(domain, self._prepare_vsf_name_domains(kw))
+        return combine_and_with_or_domains(
+            domain, self._prepare_vsf_name_like_domains(kw)
+        )
 
     def _get_vsf_date_from_leaf(self, date_from):
         dt = date_string_to_datetime(date_from)
@@ -58,10 +60,12 @@ class SaleOrder(models.Model):
         return ["|", ("validity_date", "=", False), ("validity_date", ">=", today)]
 
     @api.model
-    def _prepare_vsf_name_domains(self, kw):
+    def _prepare_vsf_name_like_domains(self, kw):
         domains = []
         if kw.get("name"):
             domains.append([("name", "ilike", kw["name"])])
         if kw.get("line_name"):
             domains.append([("order_line.name", "ilike", kw["line_name"])])
+        if kw.get("ref"):
+            domains.append([("client_order_ref", "ilike", kw["ref"])])
         return domains
