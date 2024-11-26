@@ -148,7 +148,27 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_08_query_orders_by_name_or_line_name_no_match(self):
+    def test_08_query_orders_by_name_or_ref_match_ref(self):
+        # GIVEN
+        self.sale_1.client_order_ref = "my-ref-1"
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getOrders($ids: [Int], $name: String, $ref: String) {
+                    orders(filter: {ids: $ids, name: $name, ref: $ref}) {
+                        orders {
+                            name
+                        }
+                    }
+                }
+                """,
+                variables={"name": "wrong-name", "ref": "my-ref-1"},
+            )
+        # THEN
+        self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
+
+    def test_09_query_orders_by_name_or_line_name_no_match(self):
         # WHEN
         with self.with_user("portal"):
             res = self.execute(
@@ -167,7 +187,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         self.assertEqual(res["orders"]["orders"], [])
 
     # NOTE. stage here is actually state..
-    def test_09_query_orders_by_stages(self):
+    def test_10_query_orders_by_stages(self):
         # WHEN
         with self.with_user("portal"):
             res = self.execute(
@@ -185,7 +205,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_10_query_orders_by_partner_name(self):
+    def test_11_query_orders_by_partner_name(self):
         # WHEN
         with self.with_user("portal"):
             res = self.execute(
@@ -205,7 +225,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_11_query_orders_by_date_from(self):
+    def test_12_query_orders_by_date_from(self):
         # GIVEN
         dt = self.sale_1.date_order - timedelta(days=10)
         date_from = dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
@@ -224,7 +244,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_12_query_orders_by_date_to(self):
+    def test_13_query_orders_by_date_to(self):
         # GIVEN
         dt = self.sale_1.date_order + timedelta(days=10)
         date_to = dt.strftime(DEFAULT_SERVER_DATE_FORMAT)
@@ -243,7 +263,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_13_query_orders_by_is_expired_match(self):
+    def test_14_query_orders_by_is_expired_match(self):
         # GIVEN
         self.sale_1.validity_date = date.today() - timedelta(days=10)
         # WHEN
@@ -261,7 +281,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_14_query_orders_by_is_expired_not_match(self):
+    def test_15_query_orders_by_is_expired_not_match(self):
         # GIVEN
         self.sale_1.validity_date = date.today() + timedelta(days=10)
         # WHEN
@@ -279,7 +299,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [])
 
-    def test_15_query_orders_by_is_not_expired_match(self):
+    def test_16_query_orders_by_is_not_expired_match(self):
         # GIVEN
         self.sale_1.validity_date = date.today() + timedelta(days=10)
         # WHEN
@@ -297,7 +317,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_16_query_orders_by_is_not_expired_no_date_match(self):
+    def test_17_query_orders_by_is_not_expired_no_date_match(self):
         # GIVEN
         self.sale_1.validity_date = False
         # WHEN
@@ -315,7 +335,7 @@ class TestQueryOrder(common.TestVuestorefrontCommon):
         # THEN
         self.assertEqual(res["orders"]["orders"], [{"name": self.sale_1.name}])
 
-    def test_17_query_orders_by_is_not_expired_not_match(self):
+    def test_18_query_orders_by_is_not_expired_not_match(self):
         # GIVEN
         self.sale_1.validity_date = date.today() - timedelta(days=10)
         # WHEN

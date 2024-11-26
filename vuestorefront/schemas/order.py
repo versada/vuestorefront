@@ -43,6 +43,7 @@ class OrderFilterInput(graphene.InputObjectType):
     invoice_status = graphene.List(InvoiceStatus)
     line_name = graphene.String()
     is_expired = graphene.Boolean()
+    ref = graphene.String()
 
 
 class OrderSortInput(graphene.InputObjectType):

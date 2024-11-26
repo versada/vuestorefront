@@ -43,6 +43,7 @@ class InvoiceFilterInput(graphene.InputObjectType):
     date_to = graphene.String()
     payment_states = graphene.List(InvoicePaymentState)
     line_name = graphene.String()
+    ref = graphene.String()
 
 
 class InvoiceSortInput(graphene.InputObjectType):
