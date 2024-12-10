@@ -41,6 +41,61 @@ class TestMutatePayment(TestVuestorefrontSaleCommon):
         )
 
     @patch(PATH_PATCH_PAYMENT_REQ)
+    def test_02_query_payment_acquirers_w_included(self, req1):
+        # GIVEN
+        self.payment_acquirer_transfer.vsf_active = True
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getPaymentAcquirers ($includedProviders: [String!]) {
+                    paymentAcquirers (filter: {includedProviders: $includedProviders}) {
+                        name
+                    }
+                }
+                """,
+                variables={
+                    "includedProviders": ["transfer"],
+                }
+            )
+        # THEN
+        self.assertEqual(
+            res["paymentAcquirers"],
+            [
+                {
+                    "name": self.payment_acquirer_transfer.name,
+                }
+            ],
+
+        )
+
+    @patch(PATH_PATCH_PAYMENT_REQ)
+    def test_03_query_payment_acquirers_w_excluded(self, req1):
+        # GIVEN
+        self.payment_acquirer_transfer.vsf_active = True
+        # WHEN
+        with self.with_user("portal"):
+            res = self.execute(
+                """
+                query getPaymentAcquirers ($excludedProviders: [String!]) {
+                    paymentAcquirers (filter: {excludedProviders: $excludedProviders}) {
+                        name
+                    }
+                }
+                """,
+                variables={
+                    "excludedProviders": ["transfer"],
+                }
+            )
+        # THEN
+        self.assertEqual(
+            res["paymentAcquirers"],
+            [
+            ],
+
+        )
+
+    @patch(PATH_PATCH_PAYMENT_REQ)
     def test_02_mutate_pay_transfer(self, req1):
         # WHEN
         with self.with_user("portal"):

@@ -10,7 +10,6 @@ from graphql import GraphQLError
 
 from odoo import _
 from odoo.http import request
-from odoo.osv import expression
 from odoo.addons.payment_vsf import utils as payment_utils
 from odoo.addons.payment_vsf_adyen.const import CURRENCY_DECIMALS
 from odoo.addons.vuestorefront.schemas.objects import PaymentAcquirer, PaymentTransaction
@@ -22,6 +21,8 @@ from odoo.addons.payment_vsf_adyen.controllers.main import AdyenDirectController
 class PaymentAcquirerFilterInput(graphene.InputObjectType):
     order_id = graphene.Int()
     access_token = graphene.String()
+    included_providers = graphene.List(graphene.NonNull(graphene.String))
+    excluded_providers = graphene.List(graphene.NonNull(graphene.String))
 
 
 class MakePaymentExtraInput(graphene.InputObjectType):
@@ -79,6 +80,7 @@ class PaymentQuery(graphene.ObjectType):
         request.website = website
         order = website.sale_get_order()
 
+        # TODO: this check is redundant..
         if filter.get('order_id', False):
             order = SaleOrder.search([('id', '=', filter['order_id'])], limit=1)
 
@@ -92,13 +94,9 @@ class PaymentQuery(graphene.ObjectType):
         if not order:
             raise GraphQLError(_('Order does not exist.'))
 
-        domain = expression.AND([
-            ['&', ('vsf_active', '=', True), ('state', 'in', ['enabled', 'test'])],
-            ['|', ('company_id', '=', False), ('company_id', '=', order.company_id.id)],
-            ['|', ('website_id', '=', False), ('website_id', '=', website.id)],
-            ['|', ('country_ids', '=', False), ('country_ids', 'in', [order.partner_id.country_id.id])]
-        ])
-        return env['payment.acquirer'].sudo().search(domain)
+        PaymentAcquirer = env['payment.acquirer']
+        domain = PaymentAcquirer.prepare_vsf_domain(order, website, **filter)
+        return PaymentAcquirer.sudo().search(domain)
 
     def resolve_payment_transaction(self, info, id, reference):
         env = info.context["env"]

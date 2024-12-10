@@ -12,6 +12,7 @@ from . import (
     res_config_settings,
     res_users,
     sale_order,
+    payment_acquirer,
     payment_transaction,
     website_page,
     account_move,
