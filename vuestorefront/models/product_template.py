@@ -114,7 +114,6 @@ class ProductTemplate(models.Model):
                 "@type": "Offer",
                 "url": "%s/product/%s" % (website.domain or '', slug(self)),
                 "priceCurrency": self.currency_id.name,
-                "price": self.list_price,
                 "itemCondition": "https://schema.org/NewCondition",
                 # TODO: implement a way to show real stock?
                 "availability": "https://schema.org/InStock",

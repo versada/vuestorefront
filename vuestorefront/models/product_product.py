@@ -31,7 +31,6 @@ class ProductProduct(models.Model):
                 "@type": "Offer",
                 "url": "%s/product/%s" % (website.get_vsf_http_domain(), slug(self)),
                 "priceCurrency": self.currency_id.name,
-                "price": self.list_price,
                 "itemCondition": "https://schema.org/NewCondition",
                 "availability": "https://schema.org/InStock",
                 "seller": {

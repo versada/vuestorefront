@@ -331,18 +331,12 @@ class Product(OdooObjectType):
     slug = graphene.String()
     alternative_products = graphene.List(graphene.NonNull(lambda: Product))
     accessory_products = graphene.List(graphene.NonNull(lambda: Product))
-    # Specific to use in Product Variant
-    combination_info_variant = generic.GenericScalar(description='Specific to Product Variant')
-    variant_price = graphene.Float(description='Specific to Product Variant')
-    variant_price_after_discount = graphene.Float(description='Specific to Product Variant')
-    variant_has_discounted_price = graphene.Boolean(description='Specific to Product Variant')
     is_variant_possible = graphene.Boolean(description='Specific to Product Variant')
     variant_attribute_values = graphene.List(graphene.NonNull(lambda: AttributeValue),
                                              description='Specific to Product Variant')
     product_template = graphene.Field((lambda: Product), description='Specific to Product Variant')
     # Specific to use in Product Template
     combination_info = generic.GenericScalar(description='Specific to Product Template')
-    price = graphene.Float(description='Specific to Product Template')
     attribute_values = graphene.List(graphene.NonNull(lambda: AttributeValue),
                                      description='Specific to Product Template')
     product_variants = graphene.List(graphene.NonNull(lambda: Product), description='Specific to Product Template')
@@ -433,27 +427,6 @@ class Product(OdooObjectType):
     def resolve_accessory_products(self, info):
         return self.accessory_product_ids or None
 
-    # Specific to use in Product Variant
-    def resolve_combination_info_variant(self, info):
-        env = info.context["env"]
-        pricing_info = get_product_pricing_info(env, self)
-        return pricing_info or None
-
-    def resolve_variant_price(self, info):
-        env = info.context["env"]
-        pricing_info = get_product_pricing_info(env, self)
-        return pricing_info['list_price'] or None
-
-    def resolve_variant_price_after_discount(self, info):
-        env = info.context["env"]
-        pricing_info = get_product_pricing_info(env, self)
-        return pricing_info['price'] or None
-
-    def resolve_variant_has_discounted_price(self, info):
-        env = info.context["env"]
-        pricing_info = get_product_pricing_info(env, self)
-        return pricing_info['has_discounted_price']
-
     def resolve_is_variant_possible(self, info):
         return self._is_variant_possible()
 
@@ -468,9 +441,6 @@ class Product(OdooObjectType):
         env = info.context["env"]
         pricing_info = get_product_pricing_info(env, self.product_variant_id)
         return pricing_info or None
-
-    def resolve_price(self, info):
-        return self.list_price or None
 
     def resolve_attribute_values(self, info):
         return self.attribute_line_ids.product_template_value_ids or None
